@@ -28,6 +28,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Register the IdentityVerificationService
 builder.Services.AddScoped<IdentityVerificationService>();
+builder.Services.AddScoped<IDocumentVerificationService, DocumentVerificationService>();
 
 var app = builder.Build();
 
