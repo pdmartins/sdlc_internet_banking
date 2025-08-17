@@ -39,7 +39,7 @@ const IdentityVerificationForm = ({ onNext }) => {
     };
 
     return (
-        <div>
+        <div className="form-container">
             <h2>Identity Verification</h2>
             <form onSubmit={handleSubmit}>
                 <div>
@@ -49,6 +49,7 @@ const IdentityVerificationForm = ({ onNext }) => {
                         id="userId"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
+                        className="input-field"
                     />
                 </div>
                 <div>
@@ -57,6 +58,7 @@ const IdentityVerificationForm = ({ onNext }) => {
                         type="file"
                         id="idFile"
                         onChange={(e) => handleFileChange(e, setIdFile)}
+                        className="input-field"
                     />
                 </div>
                 <div>
@@ -65,11 +67,12 @@ const IdentityVerificationForm = ({ onNext }) => {
                         type="file"
                         id="selfieFile"
                         onChange={(e) => handleFileChange(e, setSelfieFile)}
+                        className="input-field"
                     />
                 </div>
-                <button type="submit">Submit</button>
+                <button type="submit" className="form-button">Submit</button>
             </form>
-            {statusMessage && <p>{statusMessage}</p>}
+            {statusMessage && <p className="feedback-message">{statusMessage}</p>}
         </div>
     );
 };

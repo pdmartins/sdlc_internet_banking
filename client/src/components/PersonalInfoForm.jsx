@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './PersonalInfoForm.css'; // Import the CSS file for styling
 
 const PersonalInfoForm = ({ onNext }) => {
   const [name, setName] = useState('');
@@ -27,7 +28,7 @@ const PersonalInfoForm = ({ onNext }) => {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Personal Information</h2>
       <form onSubmit={handleSubmit}>
         <div>
@@ -38,6 +39,7 @@ const PersonalInfoForm = ({ onNext }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="input-field"
             />
           </label>
         </div>
@@ -49,6 +51,7 @@ const PersonalInfoForm = ({ onNext }) => {
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
               required
+              className="input-field"
             />
           </label>
         </div>
@@ -60,12 +63,13 @@ const PersonalInfoForm = ({ onNext }) => {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               required
+              className="input-field"
             />
           </label>
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit" className="form-button">Submit</button>
       </form>
-      {feedback && <p>{feedback}</p>}
+      {feedback && <p className="feedback-message">{feedback}</p>}
     </div>
   );
 };

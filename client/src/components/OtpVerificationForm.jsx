@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './OtpVerificationForm.css'; // Import the CSS file for styling
 
 const OtpVerificationForm = ({ onNext }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
@@ -45,7 +46,7 @@ const OtpVerificationForm = ({ onNext }) => {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>OTP Verification</h2>
       {step === 1 && (
         <div>
@@ -55,9 +56,10 @@ const OtpVerificationForm = ({ onNext }) => {
               type="text"
               value={emailOrPhone}
               onChange={(e) => setEmailOrPhone(e.target.value)}
+              className="input-field"
             />
           </label>
-          <button onClick={handleSendOtp}>Send OTP</button>
+          <button className="form-button" onClick={handleSendOtp}>Send OTP</button>
         </div>
       )}
       {step === 2 && (
@@ -68,12 +70,13 @@ const OtpVerificationForm = ({ onNext }) => {
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
+              className="input-field"
             />
           </label>
-          <button onClick={handleVerifyOtp}>Verify OTP</button>
+          <button className="form-button" onClick={handleVerifyOtp}>Verify OTP</button>
         </div>
       )}
-      {feedback && <p>{feedback}</p>}
+      {feedback && <p className="feedback-message">{feedback}</p>}
     </div>
   );
 };

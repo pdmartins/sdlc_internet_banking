@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import OtpVerificationForm from './components/OtpVerificationForm';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import IdentityVerificationForm from './components/IdentityVerificationForm';
@@ -37,12 +38,14 @@ function App() {
 
     return (
         <div className="App">
-            <nav>
-                <button onClick={() => setCurrentScreen('otp')}>OTP Verification</button>
-                <button onClick={() => setCurrentScreen('personalInfo')}>Personal Info</button>
-                <button onClick={() => setCurrentScreen('identityVerification')}>Identity Verification</button>
+            <nav className="navbar">
+                <button className="nav-button" onClick={() => setCurrentScreen('otp')}>OTP Verification</button>
+                <button className="nav-button" onClick={() => setCurrentScreen('personalInfo')}>Personal Info</button>
+                <button className="nav-button" onClick={() => setCurrentScreen('identityVerification')}>Identity Verification</button>
             </nav>
-            {renderScreen()}
+            <div className="content">
+                {renderScreen()}
+            </div>
         </div>
     );
 }
