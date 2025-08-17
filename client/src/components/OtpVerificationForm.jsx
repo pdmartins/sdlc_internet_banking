@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const OtpVerificationForm = () => {
+const OtpVerificationForm = ({ onNext }) => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState(1); // Step 1: Input email/phone, Step 2: Input OTP
@@ -35,6 +35,7 @@ const OtpVerificationForm = () => {
       const data = await response.json();
       if (response.ok) {
         setFeedback('OTP verified successfully!');
+        onNext(); // Move to the next step
       } else {
         setFeedback(data.message || 'Failed to verify OTP.');
       }
