@@ -4,6 +4,7 @@ import OtpVerificationForm from './components/OtpVerificationForm';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import IdentityVerificationForm from './components/IdentityVerificationForm';
 import TermsAcceptanceForm from './components/TermsAcceptanceForm';
+import BiometricVerificationForm from './components/BiometricVerificationForm';
 
 function App() {
     const [currentScreen, setCurrentScreen] = useState('otp');
@@ -17,6 +18,9 @@ function App() {
                 setCurrentScreen('identityVerification');
                 break;
             case 'identityVerification':
+                setCurrentScreen('biometricVerification');
+                break;
+            case 'biometricVerification':
                 setCurrentScreen('termsAcceptance');
                 break;
             case 'termsAcceptance':
@@ -35,6 +39,8 @@ function App() {
                 return <PersonalInfoForm onNext={handleNextStep} />;
             case 'identityVerification':
                 return <IdentityVerificationForm onNext={handleNextStep} />;
+            case 'biometricVerification':
+                return <BiometricVerificationForm onNext={handleNextStep} />;
             case 'termsAcceptance':
                 return <TermsAcceptanceForm onNext={handleNextStep} />;
             default:
@@ -48,6 +54,7 @@ function App() {
                 <button className="nav-button" onClick={() => setCurrentScreen('otp')}>OTP Verification</button>
                 <button className="nav-button" onClick={() => setCurrentScreen('personalInfo')}>Personal Info</button>
                 <button className="nav-button" onClick={() => setCurrentScreen('identityVerification')}>Identity Verification</button>
+                <button className="nav-button" onClick={() => setCurrentScreen('biometricVerification')}>Biometric Verification</button>
                 <button className="nav-button" onClick={() => setCurrentScreen('termsAcceptance')}>Terms Acceptance</button>
             </nav>
             <div className="content">
