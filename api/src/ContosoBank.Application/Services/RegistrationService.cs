@@ -13,7 +13,9 @@ public class RegistrationService : IRegistrationService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<RegistrationService> _logger;
 
-    public RegistrationService(IUnitOfWork unitOfWork, ILogger<RegistrationService> logger)
+    public RegistrationService(
+        IUnitOfWork unitOfWork, 
+        ILogger<RegistrationService> logger)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;

@@ -12,6 +12,9 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IAccountRepository? _accountRepository;
     private ITransactionRepository? _transactionRepository;
     private ISecurityEventRepository? _securityEventRepository;
+    private IGdprConsentRepository? _gdprConsentRepository;
+    private IDataProcessingLogRepository? _dataProcessingLogRepository;
+    private IRateLimitRepository? _rateLimitRepository;
 
     public UnitOfWork(ContosoBankDbContext context)
     {
@@ -51,6 +54,33 @@ public class UnitOfWork : IUnitOfWork, IDisposable
         {
             _securityEventRepository ??= new SecurityEventRepository(_context);
             return _securityEventRepository;
+        }
+    }
+
+    public IGdprConsentRepository GdprConsents
+    {
+        get
+        {
+            _gdprConsentRepository ??= new GdprConsentRepository(_context);
+            return _gdprConsentRepository;
+        }
+    }
+
+    public IDataProcessingLogRepository DataProcessingLogs
+    {
+        get
+        {
+            _dataProcessingLogRepository ??= new DataProcessingLogRepository(_context);
+            return _dataProcessingLogRepository;
+        }
+    }
+
+    public IRateLimitRepository RateLimits
+    {
+        get
+        {
+            _rateLimitRepository ??= new RateLimitRepository(_context);
+            return _rateLimitRepository;
         }
     }
 

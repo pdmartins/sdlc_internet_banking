@@ -60,4 +60,6 @@ public class User
     // Navigation properties
     public virtual Account? Account { get; set; }
     public virtual ICollection<SecurityEvent> SecurityEvents { get; set; } = new List<SecurityEvent>();
+    public virtual ICollection<GdprConsent> GdprConsents { get; set; } = new List<GdprConsent>();
+    public virtual ICollection<DataProcessingLog> DataProcessingLogs { get; set; } = new List<DataProcessingLog>();
 }

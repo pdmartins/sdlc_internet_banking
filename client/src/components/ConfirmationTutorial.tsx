@@ -69,7 +69,9 @@ export const ConfirmationTutorial: React.FC = () => {
     monthlyLimit: registrationData.accountInfo?.monthlyLimit || 0,
     mfaOption: registrationData.securityInfo?.mfaOption || 'sms',
     passwordStrength: registrationData.securityInfo?.passwordStrength || 0,
-    createdAt: registrationData.registrationDate?.toLocaleDateString('pt-BR') || new Date().toLocaleDateString('pt-BR')
+    createdAt: registrationData.registrationDate 
+      ? registrationData.registrationDate.toLocaleDateString('pt-BR') 
+      : new Date().toLocaleDateString('pt-BR')
   };
 
   useEffect(() => {

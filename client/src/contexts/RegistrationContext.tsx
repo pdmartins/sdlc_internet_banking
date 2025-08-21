@@ -23,7 +23,8 @@ export interface SecurityInfo {
 }
 
 export interface AccountInfo {
-  id: string;
+  accountId: string;
+  userId: string;
   accountNumber: string;
   branchCode: string;
   accountType: string;
@@ -98,7 +99,6 @@ export const RegistrationProvider: React.FC<RegistrationProviderProps> = ({ chil
         ...prev,
         personalInfo: info,
         userId: response.userId,
-        accountInfo: response.account,
         isLoading: false,
       }));
     } catch (error) {
@@ -142,7 +142,7 @@ export const RegistrationProvider: React.FC<RegistrationProviderProps> = ({ chil
         ...prev,
         securityInfo: securityInfoToStore,
         accountInfo: response.account,
-        registrationDate: new Date(response.registrationDate),
+        registrationDate: response.completedAt ? new Date(response.completedAt) : new Date(),
         isLoading: false,
       }));
     } catch (error) {

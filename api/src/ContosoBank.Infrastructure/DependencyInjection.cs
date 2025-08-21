@@ -26,12 +26,19 @@ public static class DependencyInjection
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<ISecurityEventRepository, SecurityEventRepository>();
+        services.AddScoped<IGdprConsentRepository, GdprConsentRepository>();
+        services.AddScoped<IDataProcessingLogRepository, DataProcessingLogRepository>();
+        services.AddScoped<IRateLimitRepository, RateLimitRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Application Services
         services.AddScoped<IRegistrationService, RegistrationService>();
+        services.AddScoped<IEnhancedRegistrationService, EnhancedRegistrationService>();
+        services.AddScoped<IGdprComplianceService, GdprComplianceService>();
+        services.AddScoped<IRateLimitingService, RateLimitingService>();
+        services.AddScoped<IIdentityVerificationService, IdentityVerificationService>();
 
         return services;
     }

@@ -4,44 +4,44 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://localhost:7000';
 // API response types matching backend DTOs
 export interface UserRegistrationResponse {
   userId: string;
-  message: string;
-  account: {
-    id: string;
-    accountNumber: string;
-    branchCode: string;
-    accountType: string;
-    balance: number;
-    dailyLimit: number;
-    monthlyLimit: number;
-    isActive: boolean;
-    createdAt: string;
-  };
+  fullName: string;
+  email: string;
+  phone: string;
+  cpf: string;
+  dateOfBirth: string;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  createdAt: string;
 }
 
 export interface RegistrationCompleteResponse {
-  userId: string;
-  message: string;
-  isRegistrationComplete: boolean;
-  account: {
-    id: string;
-    accountNumber: string;
-    branchCode: string;
-    accountType: string;
-    balance: number;
-    dailyLimit: number;
-    monthlyLimit: number;
-    isActive: boolean;
-    createdAt: string;
-  };
   user: {
-    id: string;
+    userId: string;
     fullName: string;
     email: string;
     phone: string;
     cpf: string;
+    dateOfBirth: string;
+    isEmailVerified: boolean;
+    isPhoneVerified: boolean;
     createdAt: string;
   };
-  registrationDate: string;
+  account: {
+    accountId: string;
+    userId: string;
+    accountNumber: string;
+    branchCode: string;
+    accountType: string;
+    balance: number;
+    dailyLimit: number;
+    monthlyLimit: number;
+    isActive: boolean;
+    createdAt: string;
+  };
+  securityConfigured: string;
+  mfaOption: string;
+  passwordStrength: number;
+  completedAt: string;
 }
 
 export interface ValidationResponse {
