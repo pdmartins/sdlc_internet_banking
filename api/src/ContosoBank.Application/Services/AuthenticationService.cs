@@ -16,6 +16,7 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRateLimitingService _rateLimitingService;
+    private readonly ISessionService _sessionService;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IConfiguration _configuration;
     private readonly int _maxFailedAttempts;
@@ -24,18 +25,20 @@ public class AuthenticationService : IAuthenticationService
     public AuthenticationService(
         IUnitOfWork unitOfWork,
         IRateLimitingService rateLimitingService,
+        ISessionService sessionService,
         ILogger<AuthenticationService> logger,
         IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _rateLimitingService = rateLimitingService;
+        _sessionService = sessionService;
         _logger = logger;
         _configuration = configuration;
         _maxFailedAttempts = _configuration.GetValue<int>("Authentication:MaxFailedAttempts", 5);
         _lockoutDurationMinutes = _configuration.GetValue<int>("Authentication:LockoutDurationMinutes", 30);
     }
 
-    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, string clientIpAddress)
+    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, string clientIpAddress, string userAgent)
     {
         _logger.LogInformation("Login attempt for email: {Email} from IP: {IP}", request.Email, clientIpAddress);
 
@@ -104,8 +107,14 @@ public class AuthenticationService : IAuthenticationService
         await _unitOfWork.SaveChangesAsync();
 
         // Record successful login
-        await RecordLoginSuccessAsync(user.Id, clientIpAddress, "User-Agent");
+        await RecordLoginSuccessAsync(user.Id, clientIpAddress, userAgent);
         await _rateLimitingService.RecordAttemptAsync(clientIpAddress, "LOGIN", true);
+
+        // Create session for the user
+        var sessionToken = await _sessionService.CreateSessionAsync(
+            user.Id, 
+            clientIpAddress, 
+            userAgent);
 
         // Get user's account
         var account = await _unitOfWork.Accounts.GetByUserIdAsync(user.Id);
@@ -120,7 +129,7 @@ public class AuthenticationService : IAuthenticationService
             UserId = user.Id,
             FullName = user.FullName,
             Email = user.Email,
-            Token = "temporary-token", // TODO: Implement JWT tokens
+            Token = sessionToken, // Use session token instead of temporary token
             TokenExpiresAt = DateTime.UtcNow.AddHours(8),
             RequiresMfa = requiresMfa,
             MfaMethod = user.MfaOption,

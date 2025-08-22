@@ -17,6 +17,11 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IRateLimitRepository? _rateLimitRepository;
     private IMfaSessionRepository? _mfaSessionRepository;
     private IPasswordResetRepository? _passwordResetRepository;
+    private IUserSessionRepository? _userSessionRepository;
+    private ILoginAttemptRepository? _loginAttemptRepository;
+    private IUserLoginPatternRepository? _userLoginPatternRepository;
+    private IAnomalyDetectionRepository? _anomalyDetectionRepository;
+    private ISecurityAlertRepository? _securityAlertRepository;
 
     public UnitOfWork(ContosoBankDbContext context)
     {
@@ -101,6 +106,51 @@ public class UnitOfWork : IUnitOfWork, IDisposable
         {
             _passwordResetRepository ??= new PasswordResetRepository(_context);
             return _passwordResetRepository;
+        }
+    }
+
+    public IUserSessionRepository UserSessions
+    {
+        get
+        {
+            _userSessionRepository ??= new UserSessionRepository(_context);
+            return _userSessionRepository;
+        }
+    }
+
+    public ILoginAttemptRepository LoginAttempts
+    {
+        get
+        {
+            _loginAttemptRepository ??= new LoginAttemptRepository(_context);
+            return _loginAttemptRepository;
+        }
+    }
+
+    public IUserLoginPatternRepository UserLoginPatterns
+    {
+        get
+        {
+            _userLoginPatternRepository ??= new UserLoginPatternRepository(_context);
+            return _userLoginPatternRepository;
+        }
+    }
+
+    public IAnomalyDetectionRepository AnomalyDetections
+    {
+        get
+        {
+            _anomalyDetectionRepository ??= new AnomalyDetectionRepository(_context);
+            return _anomalyDetectionRepository;
+        }
+    }
+
+    public ISecurityAlertRepository SecurityAlerts
+    {
+        get
+        {
+            _securityAlertRepository ??= new SecurityAlertRepository(_context);
+            return _securityAlertRepository;
         }
     }
 

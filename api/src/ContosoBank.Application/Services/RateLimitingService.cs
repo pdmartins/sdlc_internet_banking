@@ -178,146 +178,114 @@ public class RateLimitingService : IRateLimitingService
 
     public async Task RecordAttemptAsync(string clientIdentifier, string attemptType, bool isSuccessful)
     {
-        try
+        const int maxRetries = 3;
+        var delayMs = 100;
+
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            var entry = await _unitOfWork.RateLimits.GetByClientAndTypeAsync(clientIdentifier, attemptType);
-            var now = DateTime.UtcNow;
-
-            if (entry == null)
+            try
             {
-                // Create new entry
-                entry = new RateLimitEntry
-                {
-                    Id = Guid.NewGuid(),
-                    ClientIdentifier = clientIdentifier,
-                    AttemptType = attemptType,
-                    AttemptCount = 1,
-                    SuccessfulCount = isSuccessful ? 1 : 0,
-                    FailedCount = isSuccessful ? 0 : 1,
-                    FirstAttempt = now,
-                    LastAttempt = now,
-                    IsBlocked = false,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
+                await RecordAttemptInternalAsync(clientIdentifier, attemptType, isSuccessful);
+                return; // Success, exit retry loop
+            }
+            catch (Exception ex) when (attempt < maxRetries - 1 && IsConcurrencyException(ex))
+            {
+                _logger.LogWarning("Concurrency exception on attempt {Attempt} for {ClientId}/{Type}: {Error}", 
+                    attempt + 1, clientIdentifier, attemptType, ex.Message);
+                
+                // Wait with exponential backoff before retrying
+                await Task.Delay(delayMs);
+                delayMs *= 2;
+            }
+        }
+        
+        // If we get here, all retries failed
+        _logger.LogError("Failed to record attempt for {ClientId}/{Type} after {MaxRetries} retries", 
+            clientIdentifier, attemptType, maxRetries);
+    }
 
-                await _unitOfWork.RateLimits.AddAsync(entry);
+    private bool IsConcurrencyException(Exception ex)
+    {
+        return ex.GetType().Name.Contains("DbUpdateConcurrencyException") ||
+               ex.Message.Contains("concurrency") ||
+               ex.Message.Contains("The database operation was expected to affect 1 row(s), but actually affected 0 row(s)") ||
+               ex.Message.Contains("unique index") ||
+               ex.Message.Contains("duplicate key");
+    }
+
+    private async Task RecordAttemptInternalAsync(string clientIdentifier, string attemptType, bool isSuccessful)
+    {
+        var now = DateTime.UtcNow;
+        var maxAttempts = GetMaxAttempts(attemptType);
+
+        // Try to get existing entry first
+        var entry = await _unitOfWork.RateLimits.GetByClientAndTypeAsync(clientIdentifier, attemptType);
+
+        if (entry == null)
+        {
+            // Create new entry
+            entry = new RateLimitEntry
+            {
+                Id = Guid.NewGuid(),
+                ClientIdentifier = clientIdentifier,
+                AttemptType = attemptType,
+                AttemptCount = 1,
+                SuccessfulCount = isSuccessful ? 1 : 0,
+                FailedCount = isSuccessful ? 0 : 1,
+                FirstAttempt = now,
+                LastAttempt = now,
+                IsBlocked = false,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            await _unitOfWork.RateLimits.AddAsync(entry);
+        }
+        else
+        {
+            // Update existing entry
+            if (IsWindowExpired(entry))
+            {
+                // Reset for new window
+                entry.AttemptCount = 1;
+                entry.SuccessfulCount = isSuccessful ? 1 : 0;
+                entry.FailedCount = isSuccessful ? 0 : 1;
+                entry.FirstAttempt = now;
+                entry.IsBlocked = false;
+                entry.BlockedUntil = null;
+                entry.BlockReason = null;
             }
             else
             {
-                // Update existing entry
-                if (IsWindowExpired(entry))
-                {
-                    // Reset for new window
-                    entry.AttemptCount = 1;
-                    entry.SuccessfulCount = isSuccessful ? 1 : 0;
-                    entry.FailedCount = isSuccessful ? 0 : 1;
-                    entry.FirstAttempt = now;
-                    entry.IsBlocked = false;
-                    entry.BlockedUntil = null;
-                    entry.BlockReason = null;
-                }
+                // Increment counters
+                entry.AttemptCount++;
+                if (isSuccessful)
+                    entry.SuccessfulCount++;
                 else
-                {
-                    // Increment counters
-                    entry.AttemptCount++;
-                    if (isSuccessful)
-                        entry.SuccessfulCount++;
-                    else
-                        entry.FailedCount++;
-                }
-
-                entry.LastAttempt = now;
-                entry.UpdatedAt = now;
-
-                // Check if should be blocked
-                var maxAttempts = GetMaxAttempts(attemptType);
-                if (!isSuccessful && entry.FailedCount >= maxAttempts)
-                {
-                    entry.IsBlocked = true;
-                    entry.BlockedUntil = now.Add(_blockDuration);
-                    entry.BlockReason = $"Exceeded {maxAttempts} failed {attemptType.ToLower()} attempts";
-                    
-                    _logger.LogWarning("Client {ClientId} blocked for {Type} until {BlockedUntil} - {Reason}", 
-                        clientIdentifier, attemptType, entry.BlockedUntil, entry.BlockReason);
-                }
-
-                _unitOfWork.RateLimits.Update(entry);
+                    entry.FailedCount++;
             }
 
-            await _unitOfWork.SaveChangesAsync();
+            entry.LastAttempt = now;
+            entry.UpdatedAt = now;
 
-            _logger.LogInformation("Recorded {Type} attempt for {ClientId}: Success={Success}, Total={Total}", 
-                attemptType, clientIdentifier, isSuccessful, entry.AttemptCount);
-        }
-        catch (Exception ex) when (ex.Message.Contains("unique index") || ex.Message.Contains("duplicate key"))
-        {
-            // Handle unique constraint violation (race condition)
-            _logger.LogWarning("Unique constraint violation for rate limit entry {ClientId}/{Type}, retrying with update: {Error}", 
-                clientIdentifier, attemptType, ex.Message);
-            
-            // Try to get the existing entry and update it
-            try
+            // Check if should be blocked
+            if (!isSuccessful && entry.FailedCount >= maxAttempts)
             {
-                var existingEntry = await _unitOfWork.RateLimits.GetByClientAndTypeAsync(clientIdentifier, attemptType);
-                if (existingEntry != null)
-                {
-                    var now = DateTime.UtcNow;
-                    
-                    if (IsWindowExpired(existingEntry))
-                    {
-                        // Reset for new window
-                        existingEntry.AttemptCount = 1;
-                        existingEntry.SuccessfulCount = isSuccessful ? 1 : 0;
-                        existingEntry.FailedCount = isSuccessful ? 0 : 1;
-                        existingEntry.FirstAttempt = now;
-                        existingEntry.IsBlocked = false;
-                        existingEntry.BlockedUntil = null;
-                        existingEntry.BlockReason = null;
-                    }
-                    else
-                    {
-                        // Increment counters
-                        existingEntry.AttemptCount++;
-                        if (isSuccessful)
-                            existingEntry.SuccessfulCount++;
-                        else
-                            existingEntry.FailedCount++;
-                    }
-
-                    existingEntry.LastAttempt = now;
-                    existingEntry.UpdatedAt = now;
-
-                    // Check if should be blocked
-                    var maxAttempts = GetMaxAttempts(attemptType);
-                    if (!isSuccessful && existingEntry.FailedCount >= maxAttempts)
-                    {
-                        existingEntry.IsBlocked = true;
-                        existingEntry.BlockedUntil = now.Add(_blockDuration);
-                        existingEntry.BlockReason = $"Exceeded {maxAttempts} failed {attemptType.ToLower()} attempts";
-                        
-                        _logger.LogWarning("Client {ClientId} blocked for {Type} until {BlockedUntil} - {Reason}", 
-                            clientIdentifier, attemptType, existingEntry.BlockedUntil, existingEntry.BlockReason);
-                    }
-
-                    _unitOfWork.RateLimits.Update(existingEntry);
-                    await _unitOfWork.SaveChangesAsync();
-                    
-                    _logger.LogInformation("Successfully updated existing rate limit entry for {ClientId}/{Type}", 
-                        clientIdentifier, attemptType);
-                }
+                entry.IsBlocked = true;
+                entry.BlockedUntil = now.Add(_blockDuration);
+                entry.BlockReason = $"Exceeded {maxAttempts} failed {attemptType.ToLower()} attempts";
+                
+                _logger.LogWarning("Client {ClientId} blocked for {Type} until {BlockedUntil} - {Reason}", 
+                    clientIdentifier, attemptType, entry.BlockedUntil, entry.BlockReason);
             }
-            catch (Exception retryEx)
-            {
-                _logger.LogError(retryEx, "Failed to update existing rate limit entry for {ClientId}/{Type}", 
-                    clientIdentifier, attemptType);
-            }
+
+            _unitOfWork.RateLimits.Update(entry);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error recording attempt for {ClientId}, type: {Type}", 
-                clientIdentifier, attemptType);
-        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogInformation("Recorded {Type} attempt for {ClientId}: Success={Success}, Total={Total}", 
+            attemptType, clientIdentifier, isSuccessful, entry.AttemptCount);
     }
 
     private bool IsWindowExpired(RateLimitEntry entry)

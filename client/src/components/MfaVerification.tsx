@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -48,6 +48,9 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     messageType: 'info',
   });
 
+  // Use ref to track if initial code has been sent
+  const hasInitialCodeSent = useRef(false);
+
   const {
     register,
     handleSubmit,
@@ -57,30 +60,18 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     resolver: yupResolver(schema),
   });
 
-  // Send initial MFA code
-  useEffect(() => {
-    sendMfaCode();
-  }, []);
-
-  // Timer for code expiration
-  useEffect(() => {
-    if (mfaState.timeRemaining > 0) {
-      const timer = setTimeout(() => {
-        setMfaState(prev => ({
-          ...prev,
-          timeRemaining: prev.timeRemaining - 1,
-          canResend: prev.timeRemaining <= 1,
-        }));
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [mfaState.timeRemaining]);
-
-  const sendMfaCode = async () => {
-    setMfaState(prev => ({ ...prev, isLoading: true, message: '' }));
+  const sendMfaCode = useCallback(async () => {
+    setMfaState(prev => ({ 
+      ...prev, 
+      isLoading: true, 
+      message: ''
+    }));
 
     try {
+
+      //log
+      console.log(`MFA code sent to ${email} via ${mfaMethod}`);
+
       const response = await fetch(API_ENDPOINTS.MFA_SEND_CODE, {
         method: 'POST',
         headers: {
@@ -119,7 +110,31 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         messageType: 'error',
       }));
     }
-  };
+  }, [email, mfaMethod]); // Dependencies that could change
+
+  // Send initial MFA code (only once)
+  useEffect(() => {
+    if (!hasInitialCodeSent.current) {
+      hasInitialCodeSent.current = true;
+      sendMfaCode();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - we only want this to run once on mount
+
+  // Timer for code expiration
+  useEffect(() => {
+    if (mfaState.timeRemaining > 0) {
+      const timer = setTimeout(() => {
+        setMfaState(prev => ({
+          ...prev,
+          timeRemaining: prev.timeRemaining - 1,
+          canResend: prev.timeRemaining <= 1,
+        }));
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [mfaState.timeRemaining]);
 
   const verifyMfaCode = async (data: MfaFormData) => {
     if (!mfaState.sessionId) {

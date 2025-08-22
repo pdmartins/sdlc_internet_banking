@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate, Link } from 'react-router-dom';
-import { API_ENDPOINTS } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 
 // Validation schema for login form
 const loginSchema = yup.object({
@@ -30,8 +30,7 @@ interface LoginFormProps {
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginError, setLoginError] = useState<string>('');
+  const { login, isLoading, error, clearError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -63,59 +62,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
   };
 
   const handleFormSubmit = async (data: LoginFormData) => {
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-    setLoginError('');
-
     try {
-      // Call login API
-      const response = await fetch(API_ENDPOINTS.LOGIN, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Erro durante o login');
-      }
-
-      // Check if MFA is required
-      if (result.requiresMfa) {
-        // Navigate to MFA verification
+      clearError();
+      
+      const success = await login(data.email, data.password, data.rememberDevice);
+      
+      if (success) {
+        // Successful login without MFA, redirect to dashboard
+        navigate('/dashboard');
+      } else {
+        // MFA required, the login function should handle navigation
+        // Check if we need to navigate to MFA page
         navigate('/login/mfa', { 
           state: { 
-            userId: result.userId, 
-            email: result.email,
-            mfaMethod: result.mfaMethod 
+            email: data.email,
+            mfaMethod: 'sms' // This should come from login response
           } 
         });
-      } else {
-        // Store user session data (simplified - should use proper session management)
-        localStorage.setItem('user', JSON.stringify({
-          userId: result.userId,
-          email: result.email,
-          fullName: result.fullName,
-          token: result.token,
-          tokenExpiresAt: result.tokenExpiresAt,
-        }));
-
-        // Navigate to dashboard
-        navigate('/dashboard');
       }
 
+      // Call optional onSubmit prop if provided
       if (onSubmit) {
         onSubmit(data);
       }
     } catch (error) {
       console.error('Login failed:', error);
-      setLoginError(error instanceof Error ? error.message : 'Erro inesperado durante o login');
-    } finally {
-      setIsSubmitting(false);
+      // Error is handled by AuthContext
     }
   };
 
@@ -125,10 +97,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
     } else {
       navigate('/welcome');
     }
-  };
-
-  const clearError = () => {
-    setLoginError('');
   };
 
   return (
@@ -248,10 +216,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
           </div>
 
           {/* Error Display */}
-          {loginError && (
+          {error && (
             <div className="form-error" role="alert">
               <span className="error-icon">❌</span>
-              <span className="error-message">{loginError}</span>
+              <span className="error-message">{error}</span>
               <button 
                 type="button" 
                 onClick={clearError}
@@ -267,11 +235,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
           <div className="form-actions">
             <button
               type="submit"
-              disabled={!isValid || isSubmitting}
+              disabled={!isValid || isLoading}
               className="btn btn-primary btn-full-width"
               aria-label="Entrar na conta"
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <>
                   <span className="loading-spinner" aria-hidden="true"></span>
                   Entrando...

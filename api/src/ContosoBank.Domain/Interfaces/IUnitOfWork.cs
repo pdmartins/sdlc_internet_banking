@@ -10,6 +10,11 @@ public interface IUnitOfWork
     IRateLimitRepository RateLimits { get; }
     IMfaSessionRepository MfaSessions { get; }
     IPasswordResetRepository PasswordResets { get; }
+    IUserSessionRepository UserSessions { get; }
+    ILoginAttemptRepository LoginAttempts { get; }
+    IUserLoginPatternRepository UserLoginPatterns { get; }
+    IAnomalyDetectionRepository AnomalyDetections { get; }
+    ISecurityAlertRepository SecurityAlerts { get; }
     
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

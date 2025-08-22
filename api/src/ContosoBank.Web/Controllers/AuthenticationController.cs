@@ -14,6 +14,11 @@ public class AuthenticationController : ControllerBase
     private readonly IAuthenticationService _authenticationService;
     private readonly ILogger<AuthenticationController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the AuthenticationController
+    /// </summary>
+    /// <param name="authenticationService">Authentication service</param>
+    /// <param name="logger">Logger instance</param>
     public AuthenticationController(
         IAuthenticationService authenticationService,
         ILogger<AuthenticationController> logger)
@@ -37,12 +42,13 @@ public class AuthenticationController : ControllerBase
                 return BadRequest(ModelState);
             }
 
-            // Get client IP address
+            // Get client IP address and user agent
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            var userAgent = HttpContext.Request.Headers["User-Agent"].FirstOrDefault() ?? "Unknown";
             
             _logger.LogInformation("Processing login request for email: {Email}", request.Email);
 
-            var result = await _authenticationService.LoginAsync(request, clientIp);
+            var result = await _authenticationService.LoginAsync(request, clientIp, userAgent);
 
             _logger.LogInformation("Login successful for user: {UserId} ({Email})", result.UserId, result.Email);
 
@@ -73,8 +79,7 @@ public class AuthenticationController : ControllerBase
     /// <summary>
     /// Validates user credentials without performing full login
     /// </summary>
-    /// <param name="email">User's email</param>
-    /// <param name="password">User's password</param>
+    /// <param name="request">Login request containing email and password</param>
     /// <returns>True if credentials are valid</returns>
     [HttpPost("validate")]
     public async Task<ActionResult<bool>> ValidateCredentials([FromBody] LoginRequestDto request)

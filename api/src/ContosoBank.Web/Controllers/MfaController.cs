@@ -30,6 +30,8 @@ public class MfaController : ControllerBase
     {
         try
         {
+            //log
+            _logger.LogWarning("Sending MFA code to {Email} via {Method}", request.Email, request.MfaMethod);
             var clientIpAddress = GetClientIpAddress();
             var userAgent = Request.Headers["User-Agent"].ToString();
 

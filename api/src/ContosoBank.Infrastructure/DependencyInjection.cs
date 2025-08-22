@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
         services.AddScoped<IMfaSessionRepository, MfaSessionRepository>();
         services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -44,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IMfaService, MfaService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<ISessionService, SessionService>();
 
         return services;
     }

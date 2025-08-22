@@ -12,8 +12,9 @@ public interface IAuthenticationService
     /// </summary>
     /// <param name="request">Login request data</param>
     /// <param name="clientIpAddress">Client IP address for security logging</param>
+    /// <param name="userAgent">Client user agent for session management</param>
     /// <returns>Login response with user information</returns>
-    Task<LoginResponseDto> LoginAsync(LoginRequestDto request, string clientIpAddress);
+    Task<LoginResponseDto> LoginAsync(LoginRequestDto request, string clientIpAddress, string userAgent);
 
     /// <summary>
     /// Validates user credentials without performing full login

@@ -80,4 +80,9 @@ public class Repository<T> : IRepository<T> where T : class
     {
         _dbSet.RemoveRange(entities);
     }
+
+    public async Task RefreshAsync(T entity)
+    {
+        await _context.Entry(entity).ReloadAsync();
+    }
 }
