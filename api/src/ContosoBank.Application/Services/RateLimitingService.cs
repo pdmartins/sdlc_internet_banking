@@ -132,7 +132,7 @@ public class RateLimitingService : IRateLimitingService
         }
     }
 
-    private async Task<bool> CanAttemptAsync(string clientIdentifier, string attemptType, int maxAttempts)
+    public async Task<bool> CanAttemptAsync(string clientIdentifier, string attemptType, int maxAttempts)
     {
         try
         {
@@ -176,7 +176,7 @@ public class RateLimitingService : IRateLimitingService
         }
     }
 
-    private async Task RecordAttemptAsync(string clientIdentifier, string attemptType, bool isSuccessful)
+    public async Task RecordAttemptAsync(string clientIdentifier, string attemptType, bool isSuccessful)
     {
         try
         {
@@ -249,6 +249,69 @@ public class RateLimitingService : IRateLimitingService
 
             _logger.LogInformation("Recorded {Type} attempt for {ClientId}: Success={Success}, Total={Total}", 
                 attemptType, clientIdentifier, isSuccessful, entry.AttemptCount);
+        }
+        catch (Exception ex) when (ex.Message.Contains("unique index") || ex.Message.Contains("duplicate key"))
+        {
+            // Handle unique constraint violation (race condition)
+            _logger.LogWarning("Unique constraint violation for rate limit entry {ClientId}/{Type}, retrying with update: {Error}", 
+                clientIdentifier, attemptType, ex.Message);
+            
+            // Try to get the existing entry and update it
+            try
+            {
+                var existingEntry = await _unitOfWork.RateLimits.GetByClientAndTypeAsync(clientIdentifier, attemptType);
+                if (existingEntry != null)
+                {
+                    var now = DateTime.UtcNow;
+                    
+                    if (IsWindowExpired(existingEntry))
+                    {
+                        // Reset for new window
+                        existingEntry.AttemptCount = 1;
+                        existingEntry.SuccessfulCount = isSuccessful ? 1 : 0;
+                        existingEntry.FailedCount = isSuccessful ? 0 : 1;
+                        existingEntry.FirstAttempt = now;
+                        existingEntry.IsBlocked = false;
+                        existingEntry.BlockedUntil = null;
+                        existingEntry.BlockReason = null;
+                    }
+                    else
+                    {
+                        // Increment counters
+                        existingEntry.AttemptCount++;
+                        if (isSuccessful)
+                            existingEntry.SuccessfulCount++;
+                        else
+                            existingEntry.FailedCount++;
+                    }
+
+                    existingEntry.LastAttempt = now;
+                    existingEntry.UpdatedAt = now;
+
+                    // Check if should be blocked
+                    var maxAttempts = GetMaxAttempts(attemptType);
+                    if (!isSuccessful && existingEntry.FailedCount >= maxAttempts)
+                    {
+                        existingEntry.IsBlocked = true;
+                        existingEntry.BlockedUntil = now.Add(_blockDuration);
+                        existingEntry.BlockReason = $"Exceeded {maxAttempts} failed {attemptType.ToLower()} attempts";
+                        
+                        _logger.LogWarning("Client {ClientId} blocked for {Type} until {BlockedUntil} - {Reason}", 
+                            clientIdentifier, attemptType, existingEntry.BlockedUntil, existingEntry.BlockReason);
+                    }
+
+                    _unitOfWork.RateLimits.Update(existingEntry);
+                    await _unitOfWork.SaveChangesAsync();
+                    
+                    _logger.LogInformation("Successfully updated existing rate limit entry for {ClientId}/{Type}", 
+                        clientIdentifier, attemptType);
+                }
+            }
+            catch (Exception retryEx)
+            {
+                _logger.LogError(retryEx, "Failed to update existing rate limit entry for {ClientId}/{Type}", 
+                    clientIdentifier, attemptType);
+            }
         }
         catch (Exception ex)
         {

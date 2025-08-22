@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IGdprConsentRepository, GdprConsentRepository>();
         services.AddScoped<IDataProcessingLogRepository, DataProcessingLogRepository>();
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
+        services.AddScoped<IMfaSessionRepository, MfaSessionRepository>();
+        services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -39,6 +41,9 @@ public static class DependencyInjection
         services.AddScoped<IGdprComplianceService, GdprComplianceService>();
         services.AddScoped<IRateLimitingService, RateLimitingService>();
         services.AddScoped<IIdentityVerificationService, IdentityVerificationService>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IMfaService, MfaService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
 
         return services;
     }

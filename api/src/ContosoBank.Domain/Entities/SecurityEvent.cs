@@ -6,8 +6,7 @@ public class SecurityEvent
 {
     public Guid Id { get; set; }
     
-    [Required]
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; } // Made nullable to allow system-level events
     
     [Required]
     [StringLength(50)]

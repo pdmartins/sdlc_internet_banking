@@ -8,6 +8,8 @@ public interface IUnitOfWork
     IGdprConsentRepository GdprConsents { get; }
     IDataProcessingLogRepository DataProcessingLogs { get; }
     IRateLimitRepository RateLimits { get; }
+    IMfaSessionRepository MfaSessions { get; }
+    IPasswordResetRepository PasswordResets { get; }
     
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

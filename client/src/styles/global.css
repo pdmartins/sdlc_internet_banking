@@ -389,6 +389,59 @@ body {
   }
 }
 
+/* Login Form Styles */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light-gray);
+  padding: 2rem 1rem;
+}
+
+.login-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 100%;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.login-form .form-links {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.login-form .form-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--light-gray);
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+/* Login form responsive adjustments */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+  }
+  
+  .login-card {
+    padding: 2rem;
+    max-width: 100%;
+  }
+}
+
 /* Security Setup Form Styles */
 .security-setup-container {
   min-height: 100vh;
@@ -1166,5 +1219,296 @@ body {
 
   .prev-button, .next-button, .finish-button {
     flex: 1;
+  }
+}
+
+/* MFA Verification Styles */
+.mfa-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--action-hover) 100%);
+  padding: 2rem 0;
+}
+
+.mfa-verification {
+  width: 100%;
+  max-width: 500px;
+}
+
+.mfa-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  margin: 1rem;
+}
+
+.mfa-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.mfa-header h2 {
+  color: var(--primary-blue);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.mfa-header p {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.mfa-form {
+  margin-bottom: 2rem;
+}
+
+.mfa-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.mfa-form .form-control {
+  font-size: 1.2rem;
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-weight: 600;
+  padding: 0.75rem;
+  font-family: 'Courier New', monospace;
+}
+
+.mfa-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.time-remaining {
+  margin: 0;
+  color: var(--primary-blue);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.attempts-remaining {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.form-actions .btn {
+  width: 100%;
+}
+
+.mfa-help {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.mfa-help p {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--primary-blue);
+}
+
+.mfa-help ul {
+  list-style: none;
+  padding: 0;
+}
+
+.mfa-help li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.mfa-help li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary-blue);
+  font-weight: bold;
+}
+
+/* Alert styles for MFA */
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* Responsive adjustments for MFA */
+@media (max-width: 768px) {
+  .mfa-card {
+    padding: 2rem 1.5rem;
+    margin: 0.5rem;
+  }
+
+  .mfa-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .mfa-form .form-control {
+    font-size: 1.1rem;
+  }
+
+  .form-actions {
+    gap: 0.5rem;
+  }
+}
+
+/* Password Reset Styles */
+.forgot-password-container,
+.reset-password-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--action-hover) 100%);
+  padding: 1rem;
+}
+
+.forgot-password-card,
+.reset-password-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 2.5rem;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+}
+
+.forgot-password-form,
+.reset-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Security question display */
+.security-question-display {
+  background-color: var(--light-gray);
+  border: 1px solid var(--medium-gray);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-style: italic;
+  color: var(--text-black);
+  margin-bottom: 0.5rem;
+}
+
+/* Password strength indicator */
+.password-strength {
+  margin-top: 0.5rem;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background-color: var(--light-gray);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Success/Error content specific to password reset */
+.success-content,
+.error-content {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.success-content h3 {
+  color: var(--text-black);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.success-instructions {
+  text-align: left;
+  background-color: var(--light-gray);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.success-instructions ol {
+  padding-left: 1.25rem;
+}
+
+.success-instructions li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments for password reset */
+@media (max-width: 768px) {
+  .forgot-password-card,
+  .reset-password-card {
+    padding: 2rem 1.5rem;
+    margin: 0.5rem;
+  }
+
+  .forgot-password-container,
+  .reset-password-container {
+    padding: 0.5rem;
+  }
+
+  .success-instructions {
+    padding: 1rem;
+  }
+
+  .success-instructions li {
+    font-size: 0.85rem;
   }
 }

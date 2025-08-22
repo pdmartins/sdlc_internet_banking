@@ -57,6 +57,13 @@ public class User
     
     public DateTime? LastLoginAt { get; set; }
     
+    // Security and lockout properties
+    public int FailedLoginAttempts { get; set; } = 0;
+    
+    public DateTime? LastFailedLoginAt { get; set; }
+    
+    public DateTime? AccountLockedUntil { get; set; }
+    
     // Navigation properties
     public virtual Account? Account { get; set; }
     public virtual ICollection<SecurityEvent> SecurityEvents { get; set; } = new List<SecurityEvent>();

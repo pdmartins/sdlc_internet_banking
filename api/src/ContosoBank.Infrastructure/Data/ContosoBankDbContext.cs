@@ -13,6 +13,9 @@ public class ContosoBankDbContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<SecurityEvent> SecurityEvents { get; set; }
+    public DbSet<RateLimitEntry> RateLimitEntries { get; set; }
+    public DbSet<MfaSession> MfaSessions { get; set; }
+    public DbSet<PasswordReset> PasswordResets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,6 +112,91 @@ public class ContosoBankDbContext : DbContext
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.EventType);
+        });
+
+        // RateLimitEntry configuration
+        modelBuilder.Entity<RateLimitEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ClientIdentifier).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.AttemptType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.AttemptCount).IsRequired();
+            entity.Property(e => e.SuccessfulCount).IsRequired();
+            entity.Property(e => e.FailedCount).IsRequired();
+            entity.Property(e => e.FirstAttempt).IsRequired();
+            entity.Property(e => e.LastAttempt).IsRequired();
+            entity.Property(e => e.BlockedUntil).IsRequired(false);
+            entity.Property(e => e.IsBlocked).IsRequired();
+            entity.Property(e => e.BlockReason).HasMaxLength(200);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            // Indexes for efficient querying
+            entity.HasIndex(e => new { e.ClientIdentifier, e.AttemptType }).IsUnique();
+            entity.HasIndex(e => e.LastAttempt);
+            entity.HasIndex(e => e.BlockedUntil);
+            entity.HasIndex(e => e.IsBlocked);
+        });
+
+        // MfaSession configuration
+        modelBuilder.Entity<MfaSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.CodeHash).IsRequired().HasMaxLength(6);
+            entity.Property(e => e.Method).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+            entity.Property(e => e.IsUsed).IsRequired();
+            entity.Property(e => e.UsedAt).IsRequired(false);
+            entity.Property(e => e.AttemptCount).IsRequired();
+            entity.Property(e => e.MaxAttempts).IsRequired();
+            entity.Property(e => e.IsBlocked).IsRequired();
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+
+            // Indexes for efficient querying
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.IsUsed);
+            
+            // Relationship with User
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PasswordReset configuration
+        modelBuilder.Entity<PasswordReset>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+            entity.Property(e => e.IsUsed).IsRequired();
+            entity.Property(e => e.UsedAt).IsRequired(false);
+            entity.Property(e => e.AttemptCount).IsRequired();
+            entity.Property(e => e.MaxAttempts).IsRequired();
+            entity.Property(e => e.IsBlocked).IsRequired();
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+
+            // Indexes for efficient querying
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.IsUsed);
+            
+            // Relationship with User
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

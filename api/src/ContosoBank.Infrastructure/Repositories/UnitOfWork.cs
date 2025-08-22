@@ -15,6 +15,8 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IGdprConsentRepository? _gdprConsentRepository;
     private IDataProcessingLogRepository? _dataProcessingLogRepository;
     private IRateLimitRepository? _rateLimitRepository;
+    private IMfaSessionRepository? _mfaSessionRepository;
+    private IPasswordResetRepository? _passwordResetRepository;
 
     public UnitOfWork(ContosoBankDbContext context)
     {
@@ -81,6 +83,24 @@ public class UnitOfWork : IUnitOfWork, IDisposable
         {
             _rateLimitRepository ??= new RateLimitRepository(_context);
             return _rateLimitRepository;
+        }
+    }
+
+    public IMfaSessionRepository MfaSessions
+    {
+        get
+        {
+            _mfaSessionRepository ??= new MfaSessionRepository(_context);
+            return _mfaSessionRepository;
+        }
+    }
+
+    public IPasswordResetRepository PasswordResets
+    {
+        get
+        {
+            _passwordResetRepository ??= new PasswordResetRepository(_context);
+            return _passwordResetRepository;
         }
     }
 

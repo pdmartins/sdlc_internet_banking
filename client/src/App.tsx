@@ -4,6 +4,10 @@ import Welcome from './components/Welcome';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import SecuritySetupForm from './components/SecuritySetupForm';
 import ConfirmationTutorial from './components/ConfirmationTutorial';
+import LoginForm from './components/LoginForm';
+import MfaPage from './pages/MfaPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import { RegistrationProvider } from './contexts/RegistrationContext';
 import './styles/global.css';
 
@@ -27,11 +31,15 @@ const App: React.FC = () => {
           <Route path="/register/security" element={<SecuritySetupForm />} />
           <Route path="/register/confirmation" element={<ConfirmationTutorial />} />
           
-          {/* Login flow routes (to be implemented) */}
-          <Route path="/login" element={<div>Login (Coming Soon)</div>} />
+          {/* Login flow routes - User Story 2.1.1 & 2.1.3 */}
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/login/mfa" element={<MfaPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* Dashboard (to be implemented) */}
           <Route path="/dashboard" element={<div>Dashboard (Coming Soon)</div>} />
+          
           
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/welcome" replace />} />

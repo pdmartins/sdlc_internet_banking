@@ -23,6 +23,16 @@ public interface IRateLimitingService
     Task RecordLoginAttemptAsync(string clientIdentifier, bool isSuccessful);
     
     /// <summary>
+    /// Records an attempt of any type
+    /// </summary>
+    Task RecordAttemptAsync(string clientIdentifier, string attemptType, bool isSuccessful);
+    
+    /// <summary>
+    /// Checks if attempts of any type are within allowed limits
+    /// </summary>
+    Task<bool> CanAttemptAsync(string clientIdentifier, string attemptType, int maxAttempts);
+    
+    /// <summary>
     /// Gets remaining attempts for a client
     /// </summary>
     Task<int> GetRemainingAttemptsAsync(string clientIdentifier, string attemptType);

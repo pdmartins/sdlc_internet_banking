@@ -4,6 +4,7 @@ using ContosoBank.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ContosoBank.Infrastructure.Migrations
 {
     [DbContext(typeof(ContosoBankDbContext))]
-    partial class ContosoBankDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250821145818_AddAuthenticationFields")]
+    partial class AddAuthenticationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,202 +163,6 @@ namespace ContosoBank.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("GdprConsent");
-                });
-
-            modelBuilder.Entity("ContosoBank.Domain.Entities.MfaSession", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CodeHash")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MaxAttempts")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Method")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email");
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.HasIndex("IsUsed");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MfaSessions");
-                });
-
-            modelBuilder.Entity("ContosoBank.Domain.Entities.PasswordReset", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MaxAttempts")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email");
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.HasIndex("IsUsed");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordResets");
-                });
-
-            modelBuilder.Entity("ContosoBank.Domain.Entities.RateLimitEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AttemptType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("BlockReason")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("BlockedUntil")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ClientIdentifier")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("FailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FirstAttempt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("LastAttempt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("SuccessfulCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BlockedUntil");
-
-                    b.HasIndex("IsBlocked");
-
-                    b.HasIndex("LastAttempt");
-
-                    b.HasIndex("ClientIdentifier", "AttemptType")
-                        .IsUnique();
-
-                    b.ToTable("RateLimitEntries");
                 });
 
             modelBuilder.Entity("ContosoBank.Domain.Entities.SecurityEvent", b =>
@@ -603,28 +410,6 @@ namespace ContosoBank.Infrastructure.Migrations
                 {
                     b.HasOne("ContosoBank.Domain.Entities.User", "User")
                         .WithMany("GdprConsents")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ContosoBank.Domain.Entities.MfaSession", b =>
-                {
-                    b.HasOne("ContosoBank.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ContosoBank.Domain.Entities.PasswordReset", b =>
-                {
-                    b.HasOne("ContosoBank.Domain.Entities.User", "User")
-                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

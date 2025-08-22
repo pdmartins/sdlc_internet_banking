@@ -70,8 +70,22 @@ const Welcome: React.FC<WelcomeProps> = ({ onContinue }) => {
             onClick={handleContinue}
             aria-label="Continuar para o cadastro"
           >
-            Continuar
+            Criar conta
           </button>
+        </div>
+
+        {/* Login Link */}
+        <div className="welcome-login-link" style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <p>
+            Já tem uma conta?{' '}
+            <a 
+              href="/login" 
+              className="link"
+              style={{ color: 'var(--primary-blue)', textDecoration: 'none', fontWeight: '600' }}
+            >
+              Fazer login
+            </a>
+          </p>
         </div>
 
         {/* Security Information */}
