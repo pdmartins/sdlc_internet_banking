@@ -142,6 +142,8 @@ public class TransactionService : ITransactionService
             };
 
             // Update account balance
+            var balanceBefore = account.Balance;
+            
             if (request.Type.ToUpper() == "CREDIT")
             {
                 account.Balance += request.Amount;
@@ -154,6 +156,9 @@ public class TransactionService : ITransactionService
             transaction.BalanceAfter = account.Balance;
             transaction.Status = "COMPLETED";
             transaction.ProcessedAt = DateTime.UtcNow;
+
+            _logger.LogInformation("Transaction processing: Type={Type}, Amount={Amount}, Fee={Fee}, BalanceBefore={BalanceBefore}, BalanceAfter={BalanceAfter}", 
+                request.Type, request.Amount, fee, balanceBefore, account.Balance);
 
             // Save transaction and update account
             await _unitOfWork.Transactions.AddAsync(transaction);
@@ -198,6 +203,7 @@ public class TransactionService : ITransactionService
         var transactions = await _unitOfWork.Transactions.GetByAccountIdAsync(account.Id);
         
         var pagedTransactions = transactions
+            .OrderByDescending(t => t.CreatedAt) // Order by most recent first
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize);
 
@@ -213,7 +219,7 @@ public class TransactionService : ITransactionService
         }
 
         var transactions = await _unitOfWork.Transactions.GetByAccountIdAndDateRangeAsync(account.Id, startDate, endDate);
-        return transactions.Select(MapToTransactionResponseDto);
+        return transactions.OrderByDescending(t => t.CreatedAt).Select(MapToTransactionResponseDto);
     }
 
     public async Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryByTypeAsync(Guid userId, string type)
@@ -225,7 +231,7 @@ public class TransactionService : ITransactionService
         }
 
         var transactions = await _unitOfWork.Transactions.GetByTypeAsync(account.Id, type.ToUpper());
-        return transactions.Select(MapToTransactionResponseDto);
+        return transactions.OrderByDescending(t => t.CreatedAt).Select(MapToTransactionResponseDto);
     }
 
     public async Task<TransactionResponseDto?> GetTransactionByIdAsync(Guid userId, Guid transactionId)
@@ -345,13 +351,8 @@ public class TransactionService : ITransactionService
 
     private decimal CalculateTransactionFee(string type, string category, decimal amount)
     {
-        // Basic fee calculation logic - this could be made more sophisticated
-        return type.ToUpper() switch
-        {
-            "DEBIT" when category.ToUpper() == "TRANSFER" => amount * 0.001m, // 0.1% for transfers
-            "DEBIT" when category.ToUpper() == "WITHDRAWAL" => 2.50m, // Fixed fee for withdrawals
-            _ => 0.00m // No fee for credits and deposits
-        };
+        // No fees for any transactions
+        return 0.00m;
     }
 
     private async Task LogTransactionSecurityEventAsync(Guid userId, Transaction transaction)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { transactionApi, TransactionRequest } from '../services/transactionApi';
 
@@ -8,25 +9,30 @@ interface TransactionFormData {
   type: 'CREDIT' | 'DEBIT';
   amount: string;
   recipientAccount?: string;
+  recipientName?: string;
   description: string;
 }
 
 interface TransactionFormErrors {
   amount?: string;
   recipientAccount?: string;
+  recipientName?: string;
   description?: string;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<TransactionFormData>({
     type: 'CREDIT',
     amount: '',
     recipientAccount: '',
+    recipientName: '',
     description: ''
   });
   const [errors, setErrors] = useState<TransactionFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
 
   // Redirect if not authenticated
   if (!session?.isAuthenticated) {
@@ -84,9 +90,14 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (errors[name as keyof TransactionFormErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+    
+    // Clear transaction error when user modifies the form
+    if (transactionError) {
+      setTransactionError(null);
     }
 
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -96,13 +107,23 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
     setFormData(prev => ({ 
       ...prev, 
       type,
-      // Clear recipient account when switching to credit
-      recipientAccount: type === 'CREDIT' ? '' : prev.recipientAccount
+      // Clear recipient fields when switching to credit
+      recipientAccount: type === 'CREDIT' ? '' : prev.recipientAccount,
+      recipientName: type === 'CREDIT' ? '' : prev.recipientName
     }));
     
-    // Clear recipient account error when switching to credit
-    if (type === 'CREDIT' && errors.recipientAccount) {
-      setErrors(prev => ({ ...prev, recipientAccount: undefined }));
+    // Clear recipient field errors when switching to credit
+    if (type === 'CREDIT' && (errors.recipientAccount || errors.recipientName)) {
+      setErrors(prev => ({ 
+        ...prev, 
+        recipientAccount: undefined,
+        recipientName: undefined 
+      }));
+    }
+    
+    // Clear transaction error when changing type
+    if (transactionError) {
+      setTransactionError(null);
     }
   };
 
@@ -114,13 +135,19 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
     }
 
     setIsLoading(true);
+    setTransactionError(null); // Clear any previous errors
     
     try {
+      // Map transaction type to category
+      const category = formData.type === 'CREDIT' ? 'DEPOSIT' : 'TRANSFER';
+      
       const transactionData: TransactionRequest = {
         type: formData.type,
+        category: category,
         amount: parseFloat(formData.amount),
+        description: formData.description,
         recipientAccount: formData.type === 'DEBIT' ? formData.recipientAccount : undefined,
-        description: formData.description
+        recipientName: formData.type === 'DEBIT' ? formData.recipientName : undefined,
       };
       
       console.log('Sending transaction data:', transactionData);
@@ -130,20 +157,34 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
       
       console.log('Transaction response:', response);
       
-      alert(`✅ Transação processada com sucesso! ID: ${response.id}`);
-      
-      // Reset form
-      setFormData({
-        type: 'CREDIT',
-        amount: '',
-        recipientAccount: '',
-        description: ''
+      // Navigate to dashboard with success state
+      navigate('/dashboard', { 
+        state: { 
+          transactionSuccess: true,
+          transactionId: response.transactionId,
+          transactionType: formData.type,
+          transactionAmount: parseFloat(formData.amount)
+        }
       });
       
     } catch (error) {
       console.error('Transaction error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      alert(`❌ Erro ao processar transação: ${errorMessage}`);
+      
+      // Check for specific error types and provide user-friendly messages
+      if (errorMessage.toLowerCase().includes('insufficient') || 
+          errorMessage.toLowerCase().includes('saldo insuficiente') ||
+          errorMessage.toLowerCase().includes('funds')) {
+        setTransactionError('Saldo insuficiente para realizar esta transação. Verifique seu saldo atual e tente novamente com um valor menor.');
+      } else if (errorMessage.toLowerCase().includes('limit') || 
+                 errorMessage.toLowerCase().includes('limite')) {
+        setTransactionError('Transação excede o limite permitido. Verifique os limites da sua conta ou entre em contato conosco.');
+      } else if (errorMessage.toLowerCase().includes('invalid account') || 
+                 errorMessage.toLowerCase().includes('conta inválida')) {
+        setTransactionError('Conta de destino inválida. Verifique o número da conta e tente novamente.');
+      } else {
+        setTransactionError(`Erro ao processar transação: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -151,140 +192,229 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
 
   return (
     <div className="form-container">
-      <div className="form-card">
-        <div className="form-header">
+      <div className="dashboard-wrapper">
+        {/* Header */}
+        <div className="dashboard-header">
           <h1 className="form-title">Nova Transação</h1>
+          <p className="form-description">Realize depósitos, transferências e pagamentos de forma segura.</p>
         </div>
-        
-        <form onSubmit={handleSubmit}>
-          {/* Transaction Type Selection */}
-          <div className="form-section">
-            <label className="form-label">
-              Tipo de Transação
-            </label>
-            <div className="radio-group">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="type"
-                  value="CREDIT"
-                  checked={formData.type === 'CREDIT'}
-                  onChange={(e) => handleTypeChange(e.target.value as 'CREDIT' | 'DEBIT')}
-                />
-                <span>Depósito / Crédito</span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="type"
-                  value="DEBIT"
-                  checked={formData.type === 'DEBIT'}
-                  onChange={(e) => handleTypeChange(e.target.value as 'CREDIT' | 'DEBIT')}
-                />
-                <span>Transferência / Débito</span>
-              </label>
-            </div>
-          </div>
 
-          {/* Amount Input */}
-          <div className="form-group">
-            <label htmlFor="amount" className="form-label">
-              Valor (R$)
-            </label>
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              step="0.01"
-              min="0"
-              max="10000"
-              value={formData.amount}
-              onChange={handleInputChange}
-              placeholder="0,00"
-              className={`form-input ${errors.amount ? 'error' : ''}`}
-              required
-            />
-            {errors.amount && (
-              <p className="error-message">{errors.amount}</p>
-            )}
+        {/* Transaction Form Card */}
+        <div className="transaction-form-card">
+          <div className="card-header">
+            <h3>Detalhes da Transação</h3>
           </div>
-
-          {/* Recipient Account (only for debit transactions) */}
-          {formData.type === 'DEBIT' && (
-            <div className="form-group">
-              <label htmlFor="recipientAccount" className="form-label">
-                Conta de Destino
-              </label>
-              <input
-                type="text"
-                id="recipientAccount"
-                name="recipientAccount"
-                value={formData.recipientAccount}
-                onChange={handleInputChange}
-                placeholder="1234-567890-1"
-                className={`form-input ${errors.recipientAccount ? 'error' : ''}`}
-                required
-              />
-              {errors.recipientAccount && (
-                <p className="error-message">{errors.recipientAccount}</p>
-              )}
-              <p className="input-hint">
-                Formato: agência-conta-dígito (ex: 1234-567890-1)
-              </p>
+          
+          {/* Transaction Error Display */}
+          {transactionError && (
+            <div className="transaction-error-alert">
+              <div className="error-icon">❌</div>
+              <div className="error-content">
+                <h4>Erro na Transação</h4>
+                <p>{transactionError}</p>
+                <button 
+                  onClick={() => setTransactionError(null)}
+                  className="btn btn-secondary btn-small"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
             </div>
           )}
+          
+          <form onSubmit={handleSubmit}>
+            {/* Transaction Type Selection */}
+            <div className="form-section">
+              <label className="form-label">
+                Tipo de Transação
+              </label>
+              <div className="transaction-type-cards">
+                <label className={`transaction-type-card ${formData.type === 'CREDIT' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="CREDIT"
+                    checked={formData.type === 'CREDIT'}
+                    onChange={(e) => handleTypeChange(e.target.value as 'CREDIT' | 'DEBIT')}
+                  />
+                  <div className="type-content">
+                    <div className="type-icon">💰</div>
+                    <div className="type-info">
+                      <h4>Depósito / Crédito</h4>
+                      <p>Adicionar dinheiro à conta</p>
+                    </div>
+                  </div>
+                </label>
+                <label className={`transaction-type-card ${formData.type === 'DEBIT' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="DEBIT"
+                    checked={formData.type === 'DEBIT'}
+                    onChange={(e) => handleTypeChange(e.target.value as 'CREDIT' | 'DEBIT')}
+                  />
+                  <div className="type-content">
+                    <div className="type-icon">📤</div>
+                    <div className="type-info">
+                      <h4>Transferência / Débito</h4>
+                      <p>Enviar dinheiro para outra conta</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
 
-          {/* Description */}
-          <div className="form-group">
-            <label htmlFor="description" className="form-label">
-              Descrição
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Descreva o motivo da transação..."
-              className={`form-input ${errors.description ? 'error' : ''}`}
-              required
-            />
-            {errors.description && (
-              <p className="error-message">{errors.description}</p>
-            )}
-            <p className="input-hint">
-              {formData.description.length}/100 caracteres
-            </p>
-          </div>
+            <div className="form-grid">
+              {/* Amount Input */}
+              <div className="form-group">
+                <label htmlFor="amount" className="form-label">
+                  Valor (R$)
+                </label>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  step="0.01"
+                  min="0"
+                  max="10000"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  placeholder="0,00"
+                  className={`form-input ${errors.amount ? 'error' : ''}`}
+                  required
+                />
+                {errors.amount && (
+                  <p className="error-message">{errors.amount}</p>
+                )}
+              </div>
 
-          {/* Action Buttons */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-            >
-              {isLoading ? 'Processando...' : 'Continuar'}
-            </button>
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              className="btn btn-secondary"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+              {/* Recipient Account (only for debit transactions) */}
+              {formData.type === 'DEBIT' && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="recipientAccount" className="form-label">
+                      Conta de Destino
+                    </label>
+                    <input
+                      type="text"
+                      id="recipientAccount"
+                      name="recipientAccount"
+                      value={formData.recipientAccount}
+                      onChange={handleInputChange}
+                      placeholder="1234-567890-1"
+                      className={`form-input ${errors.recipientAccount ? 'error' : ''}`}
+                      required
+                    />
+                    {errors.recipientAccount && (
+                      <p className="error-message">{errors.recipientAccount}</p>
+                    )}
+                    <p className="input-hint">
+                      Formato: agência-conta-dígito (ex: 1234-567890-1)
+                    </p>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="recipientName" className="form-label">
+                      Nome do Destinatário
+                    </label>
+                    <input
+                      type="text"
+                      id="recipientName"
+                      name="recipientName"
+                      value={formData.recipientName}
+                      onChange={handleInputChange}
+                      placeholder="Nome completo do destinatário"
+                      className={`form-input ${errors.recipientName ? 'error' : ''}`}
+                    />
+                    {errors.recipientName && (
+                      <p className="error-message">{errors.recipientName}</p>
+                    )}
+                    <p className="input-hint">
+                      Nome como registrado na conta bancária
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="form-group">
+              <label htmlFor="description" className="form-label">
+                Descrição
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={3}
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Descreva o motivo da transação..."
+                className={`form-input ${errors.description ? 'error' : ''}`}
+                required
+              />
+              {errors.description && (
+                <p className="error-message">{errors.description}</p>
+              )}
+              <p className="input-hint">
+                {formData.description.length}/100 caracteres
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="form-actions">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+              >
+                {isLoading ? 'Processando...' : 'Processar Transação'}
+              </button>
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="btn btn-secondary"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
 
         {/* Information Card */}
-        <div className="info-card">
-          <h3 className="info-title">Informações Importantes:</h3>
-          <ul className="info-list">
-            <li>Valor máximo por transação: R$ 10.000,00</li>
-            <li>Transações são processadas em tempo real</li>
-            <li>Mantenha sua descrição clara e detalhada</li>
-            <li>Verifique os dados antes de confirmar</li>
-          </ul>
+        <div className="transaction-info-card">
+          <div className="card-header">
+            <h3>💡 Informações Importantes</h3>
+          </div>
+          <div className="info-grid">
+            <div className="info-item">
+              <div className="info-icon">💰</div>
+              <div className="info-content">
+                <h4>Limite por Transação</h4>
+                <p>Valor máximo: R$ 10.000,00</p>
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-icon">⚡</div>
+              <div className="info-content">
+                <h4>Processamento</h4>
+                <p>Transações em tempo real</p>
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-icon">🔐</div>
+              <div className="info-content">
+                <h4>Segurança</h4>
+                <p>Verifique os dados antes de confirmar</p>
+              </div>
+            </div>
+            <div className="info-item">
+              <div className="info-icon">📝</div>
+              <div className="info-content">
+                <h4>Descrição</h4>
+                <p>Mantenha clara e detalhada</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

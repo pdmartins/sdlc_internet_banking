@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { transactionApi, TransactionResponse } from '../services/transactionApi';
 
 const Dashboard: React.FC = () => {
   const { session, isLoading: authLoading } = useAuth();
+  const location = useLocation();
   const [balance, setBalance] = useState<number>(0);
   const [recentTransactions, setRecentTransactions] = useState<TransactionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
     console.log('Dashboard - Auth state:', { 
@@ -22,6 +25,50 @@ const Dashboard: React.FC = () => {
     }
   }, [session, authLoading]);
 
+  // Handle transaction success state from navigation
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.transactionSuccess) {
+      setShowSuccessMessage(true);
+      // Clear the state from history to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+      
+      // Auto-hide success message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
+  // Helper function to validate balance calculation (for debugging)
+  const validateBalance = (transactions: TransactionResponse[]): number => {
+    if (!transactions || transactions.length === 0) {
+      return 0.00; // Default starting balance
+    }
+
+    // Sort transactions by date (oldest first for calculation)
+    const sortedTransactions = [...transactions].sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    // Calculate balance by applying each transaction sequentially
+    let calculatedBalance = 0.00; // Starting balance
+    
+    for (const transaction of sortedTransactions) {
+      if (transaction.type.toLowerCase() === 'credit') {
+        calculatedBalance += transaction.amount;
+      } else if (transaction.type.toLowerCase() === 'debit') {
+        calculatedBalance -= transaction.amount;
+      }
+      
+      console.log(`Transaction ${transaction.transactionId}: ${transaction.type} ${transaction.amount}, Balance: ${calculatedBalance}`);
+    }
+
+    return calculatedBalance;
+  };
+
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -29,20 +76,47 @@ const Dashboard: React.FC = () => {
 
       // Load recent transactions (last 5)
       const transactions = await transactionApi.getTransactionHistory(1, 5);
+      console.log('Dashboard - Loaded transactions:', transactions);
+      
+      // Check for duplicate IDs
+      const ids = transactions.map(t => t.transactionId);
+      const uniqueIds = new Set(ids);
+      if (ids.length !== uniqueIds.size) {
+        console.warn('Dashboard - Duplicate transaction IDs found:', ids);
+      }
+      
       setRecentTransactions(Array.isArray(transactions) ? transactions : []);
 
       // Calculate current balance from the latest transaction
       if (Array.isArray(transactions) && transactions.length > 0) {
-        setBalance(transactions[0].balanceAfter);
+        // Use the balance from the most recent transaction (should be first due to ordering)
+        const currentBalance = transactions[0].balanceAfter;
+        setBalance(currentBalance);
+        
+        // Validate balance calculation (for debugging)
+        console.log('Dashboard - Current balance from latest transaction:', currentBalance);
+        console.log('Dashboard - Latest transaction:', transactions[0]);
+        
+        // Optional: Validate by calculating balance from all transactions
+        // This is just for debugging - in production you'd trust the balanceAfter field
+        const calculatedBalance = validateBalance(transactions);
+        if (Math.abs(calculatedBalance - currentBalance) > 0.01) {
+          console.warn('Dashboard - Balance mismatch detected!', {
+            reportedBalance: currentBalance,
+            calculatedBalance: calculatedBalance,
+            difference: Math.abs(calculatedBalance - currentBalance)
+          });
+        }
       } else {
         // Default balance for new accounts
-        setBalance(1000.00); // Demo balance
+        setBalance(0.00); // Starting balance with no transactions
+        console.log('Dashboard - Using default balance (no transactions)');
       }
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       setError('Erro ao carregar informações da conta');
-      // Set demo data on error
-      setBalance(1000.00);
+      // Set default balance on error (should be 0 for new accounts)
+      setBalance(0.00);
       setRecentTransactions([]);
     } finally {
       setIsLoading(false);
@@ -125,6 +199,26 @@ const Dashboard: React.FC = () => {
           <p className="form-description">Olá, {session.fullName || session.email}! Bem-vindo ao seu painel de controle.</p>
         </div>
 
+        {/* Transaction Success Message */}
+        {showSuccessMessage && (
+          <div className="success-alert">
+            <div className="success-content">
+              <div className="success-icon">✅</div>
+              <div className="success-text">
+                <h4>Transação Realizada com Sucesso!</h4>
+                <p>Sua transação foi processada e os dados foram atualizados.</p>
+              </div>
+              <button 
+                onClick={() => setShowSuccessMessage(false)}
+                className="alert-close-btn"
+                aria-label="Fechar mensagem"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="error-alert">
             <p>{error}</p>
@@ -199,8 +293,8 @@ const Dashboard: React.FC = () => {
                 <div className="col-amount">Valor</div>
                 <div className="col-status">Status</div>
               </div>
-              {recentTransactions.map((transaction) => (
-                <div key={transaction.id} className="table-row">
+              {recentTransactions.map((transaction, index) => (
+                <div key={transaction.transactionId || `transaction-${index}`} className="table-row">
                   <div className="col-date">
                     <span className="transaction-icon">{getTransactionIcon(transaction.type)}</span>
                     {formatDate(transaction.createdAt)}

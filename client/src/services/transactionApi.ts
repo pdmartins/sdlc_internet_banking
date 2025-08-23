@@ -2,22 +2,43 @@ import { API_BASE_URL } from '../config/api';
 
 export interface TransactionRequest {
   type: 'CREDIT' | 'DEBIT';
+  category: string;
   amount: number;
-  recipientAccount?: string;
   description: string;
+  reference?: string;
+  recipientAccount?: string;
+  recipientName?: string;
 }
 
 export interface TransactionResponse {
-  id: string;
+  transactionId: string;
+  accountId: string;
   type: string;
+  category: string;
   amount: number;
-  description: string;
-  recipientAccount?: string;
   balanceAfter: number;
+  description: string;
+  reference: string;
+  recipientAccount?: string;
+  recipientName?: string;
   status: string;
+  fee: number;
   createdAt: string;
   processedAt?: string;
-  fee: number;
+}
+
+export interface TransactionProcessResult {
+  isSuccessful: boolean;
+  transaction?: TransactionResponse;
+  errorMessage: string;
+  errorCode: string;
+  validationErrors: string[];
+  accountBalance: number;
+  dailyLimit: number;
+  dailyUsed: number;
+  monthlyLimit: number;
+  monthlyUsed: number;
+  estimatedFee: number;
 }
 
 export interface ApiError {
@@ -53,18 +74,28 @@ class TransactionApiService {
 
   async createTransaction(request: TransactionRequest): Promise<TransactionResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/transactions`, {
+      const response = await fetch(`${API_BASE_URL}/api/transactions/process`, {
         method: 'POST',
         headers: await this.getAuthHeaders(),
         body: JSON.stringify(request),
       });
 
       if (!response.ok) {
-        const errorData: ApiError = await response.json();
-        throw new Error(errorData.message || 'Failed to create transaction');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create transaction');
       }
 
-      return await response.json();
+      const result: TransactionProcessResult = await response.json();
+      
+      if (!result.isSuccessful) {
+        throw new Error(result.errorMessage || 'Transaction failed');
+      }
+      
+      if (!result.transaction) {
+        throw new Error('Transaction processed but no transaction data returned');
+      }
+
+      return result.transaction;
     } catch (error) {
       console.error('Transaction API error:', error);
       throw error;
