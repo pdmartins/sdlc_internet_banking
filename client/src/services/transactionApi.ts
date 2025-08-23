@@ -27,12 +27,28 @@ export interface ApiError {
 
 class TransactionApiService {
   private async getAuthHeaders(): Promise<HeadersInit> {
-    // In a real implementation, you would get the token from your auth context or storage
-    const token = localStorage.getItem('authToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-    };
+    // Get the token from the user session stored by AuthContext
+    try {
+      const userData = localStorage.getItem('user');
+      const token = userData ? JSON.parse(userData)?.token : null;
+      
+      console.log('TransactionAPI - Auth debug:', {
+        userDataExists: !!userData,
+        userDataLength: userData?.length,
+        tokenExists: !!token,
+        tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
+      });
+      
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      };
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return {
+        'Content-Type': 'application/json',
+      };
+    }
   }
 
   async createTransaction(request: TransactionRequest): Promise<TransactionResponse> {
@@ -61,13 +77,7 @@ class TransactionApiService {
     fromDate?: string,
     toDate?: string,
     type?: string
-  ): Promise<{
-    transactions: TransactionResponse[];
-    totalCount: number;
-    pageNumber: number;
-    pageSize: number;
-    totalPages: number;
-  }> {
+  ): Promise<TransactionResponse[]> {
     try {
       const params = new URLSearchParams({
         pageNumber: pageNumber.toString(),

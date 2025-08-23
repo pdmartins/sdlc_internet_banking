@@ -16,6 +16,7 @@ public class MfaService : IMfaService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRateLimitingService _rateLimitingService;
+    private readonly ISessionService _sessionService;
     private readonly ILogger<MfaService> _logger;
     private readonly IConfiguration _configuration;
     private readonly int _codeValidityMinutes;
@@ -25,11 +26,13 @@ public class MfaService : IMfaService
     public MfaService(
         IUnitOfWork unitOfWork,
         IRateLimitingService rateLimitingService,
+        ISessionService sessionService,
         ILogger<MfaService> logger,
         IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _rateLimitingService = rateLimitingService;
+        _sessionService = sessionService;
         _logger = logger;
         _configuration = configuration;
         _codeValidityMinutes = _configuration.GetValue<int>("MFA:CodeValidityMinutes", 10);
@@ -210,8 +213,11 @@ public class MfaService : IMfaService
             mfaSession.UsedAt = DateTime.UtcNow;
             _unitOfWork.MfaSessions.Update(mfaSession);
 
-            // Generate access token (simplified for now)
-            var accessToken = GenerateAccessToken(mfaSession.UserId);
+            // Create a proper session token using SessionService
+            var sessionToken = await _sessionService.CreateSessionAsync(
+                mfaSession.UserId, 
+                clientIpAddress, 
+                userAgent);
 
             await _unitOfWork.SaveChangesAsync();
             await _rateLimitingService.RecordAttemptAsync(clientIpAddress, "MFA_VERIFY", true);
@@ -222,7 +228,7 @@ public class MfaService : IMfaService
             {
                 Success = true,
                 Message = "MFA verificado com sucesso.",
-                AccessToken = accessToken,
+                AccessToken = sessionToken, // Use proper session token
                 RemainingAttempts = Math.Max(0, mfaSession.MaxAttempts - mfaSession.AttemptCount),
                 IsLocked = false
             };
@@ -431,10 +437,4 @@ public class MfaService : IMfaService
         };
     }
 
-    private string GenerateAccessToken(Guid userId)
-    {
-        // Simplified token generation - in production, use JWT with proper signing
-        var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{userId}:{DateTime.UtcNow:O}"));
-        return token;
-    }
 }

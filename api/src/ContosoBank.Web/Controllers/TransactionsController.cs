@@ -11,17 +11,21 @@ namespace ContosoBank.Web.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// TODO: Implement proper authentication scheme before enabling [Authorize]
+// [Authorize]
 public class TransactionsController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly ISessionService _sessionService;
     private readonly ILogger<TransactionsController> _logger;
 
     public TransactionsController(
         ITransactionService transactionService,
+        ISessionService sessionService,
         ILogger<TransactionsController> logger)
     {
         _transactionService = transactionService;
+        _sessionService = sessionService;
         _logger = logger;
     }
 
@@ -35,7 +39,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -67,7 +71,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -104,7 +108,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -144,7 +148,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -181,7 +185,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -213,7 +217,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -244,7 +248,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -269,7 +273,7 @@ public class TransactionsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetCurrentUserIdAsync();
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid user session");
@@ -297,13 +301,56 @@ public class TransactionsController : ControllerBase
     #region Private Helper Methods
 
     /// <summary>
-    /// Gets the current user ID from the JWT token claims
+    /// Gets the current user ID from the session token
     /// </summary>
-    /// <returns>User ID or Guid.Empty if not found</returns>
-    private Guid GetCurrentUserId()
+    /// <returns>User ID or Guid.Empty if not found or invalid session</returns>
+    private async Task<Guid> GetCurrentUserIdAsync()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+        try
+        {
+            var sessionToken = GetSessionTokenFromHeader();
+            if (string.IsNullOrEmpty(sessionToken))
+            {
+                return Guid.Empty;
+            }
+
+            var session = await _sessionService.ValidateSessionAsync(sessionToken);
+            return session?.UserId ?? Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating session token");
+            return Guid.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets session token from Authorization header or session header
+    /// </summary>
+    /// <returns>Session token if found</returns>
+    private string? GetSessionTokenFromHeader()
+    {
+        // Try Authorization header first (Bearer token)
+        var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+        _logger.LogInformation("Auth header: {AuthHeader}", authHeader ?? "null");
+        
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+        {
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            _logger.LogInformation("Extracted token: {TokenPreview}...", token.Length > 20 ? token.Substring(0, 20) : token);
+            return token;
+        }
+
+        // Try custom session header
+        var sessionHeader = HttpContext.Request.Headers["X-Session-Token"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(sessionHeader))
+        {
+            _logger.LogInformation("Using X-Session-Token: {TokenPreview}...", sessionHeader.Length > 20 ? sessionHeader.Substring(0, 20) : sessionHeader);
+            return sessionHeader;
+        }
+
+        _logger.LogWarning("No session token found in headers");
+        return null;
     }
 
     /// <summary>

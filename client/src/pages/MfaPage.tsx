@@ -1,11 +1,13 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import MfaVerification from '../components/MfaVerification';
 
 interface MfaPageState {
   userId: string;
   email: string;
+  fullName: string;
   mfaMethod: string;
 }
 
@@ -23,16 +25,20 @@ const MfaPage: React.FC = () => {
 
   const handleMfaSuccess = (token: string) => {
     // Store user session data with the new token
-    localStorage.setItem('user', JSON.stringify({
+    const sessionData = {
       userId: state.userId,
       email: state.email,
+      fullName: state.fullName,
       token: token,
       tokenExpiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), // 8 hours
-      mfaVerified: true,
-    }));
+      isAuthenticated: true,
+      inactivityTimeoutMinutes: 30
+    };
+    
+    localStorage.setItem('user', JSON.stringify(sessionData));
 
-    // Navigate to dashboard
-    navigate('/dashboard', { replace: true });
+    // Navigate to dashboard and trigger a page reload to ensure AuthContext picks up the session
+    window.location.href = '/dashboard';
   };
 
   const handleMfaCancel = () => {

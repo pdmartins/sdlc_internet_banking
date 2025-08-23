@@ -6,6 +6,7 @@ import PersonalInfoForm from './components/PersonalInfoForm';
 import SecuritySetupForm from './components/SecuritySetupForm';
 import ConfirmationTutorial from './components/ConfirmationTutorial';
 import LoginForm from './components/LoginForm';
+import Dashboard from './components/Dashboard';
 import MfaPage from './pages/MfaPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -40,8 +41,8 @@ const App: React.FC = () => {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               {/* Transaction routes - User Story 3.1.1 */}
               <Route path="/transaction" element={<TransactionPage />} />
-              {/* Dashboard (to be implemented) */}
-              <Route path="/dashboard" element={<div>Dashboard (Coming Soon)</div>} />
+              {/* Dashboard - User Story 4.1.1 */}
+              <Route path="/dashboard" element={<Dashboard />} />
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/welcome" replace />} />
             </Routes>

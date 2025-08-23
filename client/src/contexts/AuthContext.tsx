@@ -26,7 +26,7 @@ interface AuthContextType {
   session: UserSession | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string, rememberDevice?: boolean) => Promise<boolean>;
+  login: (email: string, password: string, rememberDevice?: boolean) => Promise<{success: boolean, mfaRequired?: boolean, userData?: any}>;
   logout: () => Promise<void>;
   logoutAllDevices: () => Promise<boolean>;
   validateSession: () => Promise<boolean>;
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
   };
 
-  const login = async (email: string, password: string, rememberDevice = false): Promise<boolean> => {
+  const login = async (email: string, password: string, rememberDevice = false): Promise<{success: boolean, mfaRequired?: boolean, userData?: any}> => {
     setIsLoading(true);
     setError(null);
 
@@ -146,8 +146,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Check if MFA is required
       if (result.requiresMfa) {
-        // For MFA flow, we don't set session yet
-        return false; // Indicates MFA is required
+        // For MFA flow, return user data for the MFA page
+        return {
+          success: false,
+          mfaRequired: true,
+          userData: {
+            userId: result.userId,
+            email: result.email,
+            fullName: result.fullName,
+            mfaMethod: result.mfaMethod
+          }
+        };
       }
 
       const sessionData: UserSession = {
@@ -164,10 +173,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       saveSessionToStorage(sessionData);
       setLastActivity(new Date());
 
-      return true;
+      return { success: true };
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Erro inesperado durante o login');
-      return false;
+      return { success: false };
     } finally {
       setIsLoading(false);
     }

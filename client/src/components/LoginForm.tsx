@@ -65,18 +65,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onCancel }) => {
     try {
       clearError();
       
-      const success = await login(data.email, data.password, data.rememberDevice);
+      const result = await login(data.email, data.password, data.rememberDevice);
       
-      if (success) {
+      if (result.success) {
         // Successful login without MFA, redirect to dashboard
         navigate('/dashboard');
-      } else {
-        // MFA required, the login function should handle navigation
-        // Check if we need to navigate to MFA page
+      } else if (result.mfaRequired && result.userData) {
+        // MFA required, navigate to MFA page with user data
         navigate('/login/mfa', { 
           state: { 
-            email: data.email,
-            mfaMethod: 'sms' // This should come from login response
+            userId: result.userData.userId,
+            email: result.userData.email,
+            fullName: result.userData.fullName,
+            mfaMethod: result.userData.mfaMethod
           } 
         });
       }
