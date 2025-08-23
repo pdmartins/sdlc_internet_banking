@@ -1621,6 +1621,91 @@ body {
   }
 }
 
+/* Additional styles for transaction form and other components */
+
+/* Radio group styles */
+.radio-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-black);
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 0.5rem;
+  accent-color: var(--primary-blue);
+}
+
+/* Info card styles */
+.info-card {
+  background-color: #f0f8ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 0.5rem;
+}
+
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.info-list li {
+  font-size: 0.8rem;
+  color: #1e40af;
+  margin-bottom: 0.25rem;
+  position: relative;
+  padding-left: 0.75rem;
+}
+
+.info-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary-blue);
+}
+
+/* Input hint styles */
+.input-hint {
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  margin-top: 0.25rem;
+}
+
+/* Loading button state */
+.btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dashboard specific styles */
+.dashboard-header {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.dashboard-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
 @media (max-width: 480px) {
   .inactivity-warning-modal {
     padding: 1.5rem;
@@ -1629,6 +1714,11 @@ body {
 
   .warning-actions {
     flex-direction: column;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
