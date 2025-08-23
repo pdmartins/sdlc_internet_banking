@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IMfaService, MfaService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<ISessionService, SessionService>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         return services;
     }

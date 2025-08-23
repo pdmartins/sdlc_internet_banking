@@ -9,6 +9,7 @@ import LoginForm from './components/LoginForm';
 import MfaPage from './pages/MfaPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import TransactionPage from './pages/TransactionPage';
 import InactivityWarning from './components/InactivityWarning';
 import { RegistrationProvider } from './contexts/RegistrationContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -37,6 +38,8 @@ const App: React.FC = () => {
               <Route path="/login/mfa" element={<MfaPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              {/* Transaction routes - User Story 3.1.1 */}
+              <Route path="/transaction" element={<TransactionPage />} />
               {/* Dashboard (to be implemented) */}
               <Route path="/dashboard" element={<div>Dashboard (Coming Soon)</div>} />
               {/* Catch all route */}

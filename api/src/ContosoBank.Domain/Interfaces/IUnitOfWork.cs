@@ -15,6 +15,7 @@ public interface IUnitOfWork
     IUserLoginPatternRepository UserLoginPatterns { get; }
     IAnomalyDetectionRepository AnomalyDetections { get; }
     ISecurityAlertRepository SecurityAlerts { get; }
+    ITransactionRepository Transactions { get; }
     
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
