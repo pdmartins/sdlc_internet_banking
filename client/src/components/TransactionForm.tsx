@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { transactionApi, TransactionRequest } from '../services/transactionApi';
@@ -23,7 +23,7 @@ interface TransactionFormErrors {
 const TransactionForm: React.FC<TransactionFormProps> = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<'input' | 'review'>('input');
+  const [currentStep, setCurrentStep] = useState<'input' | 'review' | 'processing' | 'success'>('input');
   const [formData, setFormData] = useState<TransactionFormData>({
     type: 'CREDIT',
     amount: '',
@@ -34,6 +34,29 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
   const [errors, setErrors] = useState<TransactionFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
+  const [transactionResult, setTransactionResult] = useState<any>(null);
+  const [currentBalance, setCurrentBalance] = useState<number | null>(null);
+
+  // Load current balance when component mounts
+  useEffect(() => {
+    const loadCurrentBalance = async () => {
+      if (session?.isAuthenticated) {
+        try {
+          const transactions = await transactionApi.getTransactionHistory(1, 1);
+          if (transactions && transactions.length > 0) {
+            setCurrentBalance(transactions[0].balanceAfter);
+          } else {
+            setCurrentBalance(0.00); // Default balance for new accounts
+          }
+        } catch (error) {
+          console.error('Error loading current balance:', error);
+          setCurrentBalance(0.00);
+        }
+      }
+    };
+    
+    loadCurrentBalance();
+  }, [session?.isAuthenticated]);
 
   // Redirect if not authenticated
   if (!session?.isAuthenticated) {
@@ -140,6 +163,7 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
   };
 
   const handleConfirmTransaction = async () => {
+    setCurrentStep('processing');
     setIsLoading(true);
     setTransactionError(null); // Clear any previous errors
     
@@ -163,25 +187,30 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
       
       console.log('Transaction response:', response);
       
-      // Navigate to dashboard with success state
-      navigate('/dashboard', { 
-        state: { 
-          transactionSuccess: true,
-          transactionId: response.transactionId,
-          transactionType: formData.type,
-          transactionAmount: parseFloat(formData.amount)
-        }
+      // Set transaction result for success display
+      setTransactionResult({
+        ...response,
+        transactionType: formData.type,
+        transactionAmount: parseFloat(formData.amount),
+        previousBalance: currentBalance,
+        newBalance: response.balanceAfter
       });
+      
+      // Update current balance
+      setCurrentBalance(response.balanceAfter);
+      
+      // Show success step
+      setCurrentStep('success');
       
     } catch (error) {
       console.error('Transaction error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       
-      // Check for specific error types and provide user-friendly messages
+      // Check for specific error types and provide user-friendly messages with enhanced feedback
       if (errorMessage.toLowerCase().includes('insufficient') || 
           errorMessage.toLowerCase().includes('saldo insuficiente') ||
           errorMessage.toLowerCase().includes('funds')) {
-        setTransactionError('Saldo insuficiente para realizar esta transação. Verifique seu saldo atual e tente novamente com um valor menor.');
+        setTransactionError(`Saldo insuficiente para realizar esta transação. Saldo atual: R$ ${currentBalance?.toFixed(2) || '0,00'}. Valor solicitado: R$ ${parseFloat(formData.amount).toFixed(2)}.`);
       } else if (errorMessage.toLowerCase().includes('limit') || 
                  errorMessage.toLowerCase().includes('limite')) {
         setTransactionError('Transação excede o limite permitido. Verifique os limites da sua conta ou entre em contato conosco.');
@@ -191,6 +220,9 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
       } else {
         setTransactionError(`Erro ao processar transação: ${errorMessage}`);
       }
+      
+      // Go back to review step to show error
+      setCurrentStep('review');
     } finally {
       setIsLoading(false);
     }
@@ -235,12 +267,19 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
         {/* Header */}
         <div className="dashboard-header">
           <h1 className="form-title">
-            {currentStep === 'input' ? 'Nova Transação' : 'Revisar Transação'}
+            {currentStep === 'input' ? 'Nova Transação' : 
+             currentStep === 'review' ? 'Revisar Transação' :
+             currentStep === 'processing' ? 'Processando Transação' :
+             'Transação Concluída'}
           </h1>
           <p className="form-description">
             {currentStep === 'input' 
               ? 'Realize depósitos, transferências e pagamentos de forma segura.'
-              : 'Revise os detalhes da sua transação antes de confirmar.'
+              : currentStep === 'review' 
+              ? 'Revise os detalhes da sua transação antes de confirmar.'
+              : currentStep === 'processing'
+              ? 'Sua transação está sendo processada, aguarde...'
+              : 'Sua transação foi processada com sucesso!'
             }
           </p>
         </div>
@@ -252,14 +291,24 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
             <div className="step-label">Detalhes</div>
           </div>
           <div className="progress-line"></div>
-          <div className={`progress-step ${currentStep === 'review' ? 'active' : ''}`}>
+          <div className={`progress-step ${currentStep === 'review' ? 'active' : (currentStep === 'processing' || currentStep === 'success') ? 'completed' : ''}`}>
             <div className="step-number">2</div>
             <div className="step-label">Revisão</div>
           </div>
+          <div className="progress-line"></div>
+          <div className={`progress-step ${currentStep === 'processing' ? 'active' : currentStep === 'success' ? 'completed' : ''}`}>
+            <div className="step-number">3</div>
+            <div className="step-label">Processando</div>
+          </div>
+          <div className="progress-line"></div>
+          <div className={`progress-step ${currentStep === 'success' ? 'active' : ''}`}>
+            <div className="step-number">4</div>
+            <div className="step-label">Concluído</div>
+          </div>
         </div>
 
-        {/* Transaction Form or Review Card */}
-        {currentStep === 'input' ? (
+        {/* Transaction Form, Review, Processing, or Success Card */}
+        {currentStep === 'input' && (
           <div className="transaction-form-card">
             <div className="card-header">
               <h3>Detalhes da Transação</h3>
@@ -438,8 +487,10 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
               </div>
             </form>
           </div>
-        ) : (
-          /* Review Step */
+        )}
+
+        {/* Review Step */}
+        {currentStep === 'review' && (
           <div className="transaction-review-card">
             <div className="card-header">
               <h3>🔍 Revisão da Transação</h3>
@@ -555,6 +606,145 @@ const TransactionForm: React.FC<TransactionFormProps> = () => {
                 className="btn btn-tertiary"
               >
                 ❌ Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Processing Step */}
+        {currentStep === 'processing' && (
+          <div className="processing-card">
+            <div className="card-header">
+              <h3>⏳ Processando Transação</h3>
+            </div>
+            <div className="processing-content">
+              <div className="processing-animation">
+                <div className="spinner-large"></div>
+              </div>
+              <h4>Sua transação está sendo processada</h4>
+              <p>Por favor, aguarde enquanto validamos e processamos sua transação. Isso pode levar alguns segundos.</p>
+              <div className="processing-details">
+                <div className="detail-row">
+                  <span>Tipo:</span>
+                  <span>{formData.type === 'CREDIT' ? '📈 Crédito' : '📉 Débito'}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Valor:</span>
+                  <span>R$ {parseFloat(formData.amount).toFixed(2)}</span>
+                </div>
+                <div className="detail-row">
+                  <span>Status:</span>
+                  <span className="status-processing">🔄 Processando...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Step */}
+        {currentStep === 'success' && (
+          <div className="success-card">
+            <div className="success-main-content">
+              {/* Success message */}
+              <div className="success-message">
+                <div className="success-checkmark">
+                  ✅
+                </div>
+                <div className="success-text">
+                  <h3>Sua transação foi processada com sucesso!</h3>
+                  <p>Todos os dados foram atualizados em tempo real. Você pode visualizar a transação no seu histórico.</p>
+                </div>
+              </div>
+
+              {/* Transaction Summary */}
+              <div className="transaction-summary">
+                <h4>📋 Resumo da Transação</h4>
+                <div className="summary-details">
+                  <div className="detail-row">
+                    <span>ID da Transação:</span>
+                    <span className="transaction-id">{transactionResult?.transactionId || 'N/A'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span>Tipo:</span>
+                    <span>{formData.type === 'CREDIT' ? 'Crédito' : 'Débito'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span>Valor:</span>
+                    <span className={formData.type === 'CREDIT' ? 'amount-positive' : 'amount-negative'}>
+                      {formData.type === 'CREDIT' ? '+' : '-'}R$ {parseFloat(formData.amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span>Descrição:</span>
+                    <span>{formData.description}</span>
+                  </div>
+                  {formData.type === 'DEBIT' && formData.recipientAccount && (
+                    <>
+                      <div className="detail-row">
+                        <span>Conta Destino:</span>
+                        <span>{formData.recipientAccount}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span>Destinatário:</span>
+                        <span>{formData.recipientName}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Balance Update */}
+              <div className="balance-update">
+                <h4>💰 Atualização do Saldo</h4>
+                <div className="balance-comparison">
+                  <div className="balance-item">
+                    <span className="balance-label">Saldo Anterior:</span>
+                    <span className="balance-value">
+                      R$ {currentBalance ? (currentBalance - parseFloat(formData.amount) * (formData.type === 'CREDIT' ? -1 : 1)).toFixed(2) : '0,00'}
+                    </span>
+                  </div>
+                  <div className="balance-arrow">→</div>
+                  <div className="balance-item">
+                    <span className="balance-label">Saldo Atual:</span>
+                    <span className="balance-value balance-current">
+                      R$ {currentBalance?.toFixed(2) || '0,00'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="success-actions">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="btn btn-primary btn-large"
+              >
+                📊 Ver Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentStep('input');
+                  setFormData({
+                    type: 'CREDIT',
+                    amount: '',
+                    recipientAccount: '',
+                    recipientName: '',
+                    description: ''
+                  });
+                  setTransactionResult(null);
+                  setErrors({});
+                  setTransactionError(null);
+                }}
+                className="btn btn-secondary"
+              >
+                💸 Nova Transação
+              </button>
+              <button
+                onClick={() => navigate('/transaction/history')}
+                className="btn btn-tertiary"
+              >
+                📋 Ver Histórico
               </button>
             </div>
           </div>
