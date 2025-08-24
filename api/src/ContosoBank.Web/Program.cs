@@ -69,8 +69,21 @@ builder.Services.AddCors(options =>
             .WithOrigins("http://localhost:3000", "https://localhost:3000") // React development server
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10)); // Cache preflight response for 10 minutes
     });
+    
+    // Add a more permissive policy for development debugging
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    }
 });
 
 // Add Infrastructure services (Database, Repositories, Application Services)
@@ -159,11 +172,14 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// HTTPS Redirection (enforces HTTPS)
-app.UseHttpsRedirection();
-
-// Enable CORS
+// Enable CORS (must be before HTTPS redirection for preflight requests)
 app.UseCors("AllowReactApp");
+
+// HTTPS Redirection (enforces HTTPS) - Disabled in development for CORS testing
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Authentication and Authorization
 app.UseAuthentication();

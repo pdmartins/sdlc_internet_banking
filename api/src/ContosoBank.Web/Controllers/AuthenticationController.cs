@@ -127,4 +127,24 @@ public class AuthenticationController : ControllerBase
             return StatusCode(500, new { message = "Erro ao verificar status da conta" });
         }
     }
+
+    /// <summary>
+    /// Test endpoint to verify CORS configuration
+    /// </summary>
+    /// <returns>Simple test response</returns>
+    [HttpGet("test")]
+    public ActionResult<object> Test()
+    {
+        return Ok(new { message = "CORS test successful", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Options endpoint for CORS preflight requests
+    /// </summary>
+    /// <returns>Empty response for preflight</returns>
+    [HttpOptions("login")]
+    public ActionResult PreflightLogin()
+    {
+        return Ok();
+    }
 }
