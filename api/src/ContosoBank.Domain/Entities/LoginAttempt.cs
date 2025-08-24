@@ -10,7 +10,6 @@ public class LoginAttempt
     [Key]
     public Guid Id { get; set; }
 
-    [Required]
     public Guid? UserId { get; set; } // Nullable for failed attempts where user doesn't exist
 
     [Required]

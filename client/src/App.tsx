@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import TransactionPage from './pages/TransactionPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
+import ProfilePage from './pages/ProfilePage';
 import InactivityWarning from './components/InactivityWarning';
 import { RegistrationProvider } from './contexts/RegistrationContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -46,6 +47,8 @@ const App: React.FC = () => {
               <Route path="/transaction/history" element={<TransactionHistoryPage />} />
               {/* Dashboard - User Story 4.1.1 */}
               <Route path="/dashboard" element={<Dashboard />} />
+              {/* Profile & Settings - User Story 4.2.1 */}
+              <Route path="/profile" element={<ProfilePage />} />
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/welcome" replace />} />
             </Routes>

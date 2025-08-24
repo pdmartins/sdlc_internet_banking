@@ -1,0 +1,655 @@
+/* Profile Page - Additional Styles */
+/* Uses standard form-container and dashboard-wrapper from global.css */
+
+/* Tab Navigation */
+.profile-tabs {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 0.5rem;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  background-color: #F8F9FA;
+  color: #1A1A1A;
+}
+
+.tab-button.active {
+  background-color: #0078D4;
+  color: #FFFFFF;
+}
+
+.tab-icon {
+  font-size: 1.1rem;
+}
+
+/* Profile Content */
+.profile-content {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Components */
+.profile-form-container,
+.security-settings-container,
+.device-management-container {
+  max-width: 100%;
+}
+
+.profile-form-header,
+.security-settings-header,
+.device-management-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 0.5rem;
+}
+
+.form-description {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+/* Loading States */
+.profile-form-loading,
+.security-settings-loading,
+.device-management-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #E3E3E3;
+  border-top: 3px solid #0078D4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E3E3E3;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background-color: #FFFFFF;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #0078D4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+.form-input.success {
+  border-color: #28A745;
+}
+
+.form-input.error {
+  border-color: #DC3545;
+}
+
+.form-input.readonly {
+  background-color: #F8F9FA;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Field Feedback */
+.field-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.field-feedback.success {
+  color: #28A745;
+}
+
+.field-feedback.error {
+  color: #DC3545;
+}
+
+.feedback-icon {
+  font-size: 1rem;
+}
+
+.field-help {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.verified-badge {
+  color: #28A745;
+  font-weight: 500;
+}
+
+.unverified-badge {
+  color: #F7A800;
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #0078D4;
+  color: #FFFFFF;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #005A9E;
+}
+
+.btn-secondary {
+  background-color: #E3E3E3;
+  color: #1A1A1A;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #C8C8C8;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: #E3E3E3;
+  color: #1A1A1A;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #F8F9FA;
+}
+
+.btn-danger {
+  background-color: #DC3545;
+  color: #FFFFFF;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #C82333;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: flex-start;
+}
+
+/* Security Settings */
+.security-settings-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.security-card {
+  border: 1px solid #E3E3E3;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.security-card-header {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #F8F9FA;
+}
+
+.security-card-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+}
+
+.security-card-info {
+  flex: 1;
+}
+
+.security-card-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1A1A1A;
+  font-size: 1.25rem;
+}
+
+.security-card-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.security-form {
+  padding: 1.5rem;
+  border-top: 1px solid #E3E3E3;
+}
+
+/* Password Strength */
+.password-strength,
+.password-strength-indicator {
+  margin-top: 0.5rem;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #E3E3E3;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s;
+}
+
+.strength-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.strength-feedback {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* MFA Options */
+.mfa-options {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.mfa-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #E3E3E3;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mfa-option:hover {
+  border-color: #C8C8C8;
+}
+
+.mfa-option:has(.mfa-radio:checked) {
+  border-color: #0078D4;
+  background-color: rgba(0, 120, 212, 0.05);
+}
+
+.mfa-radio {
+  margin-top: 0.25rem;
+}
+
+.mfa-option-content h4 {
+  margin: 0 0 0.25rem 0;
+  color: #1A1A1A;
+}
+
+.mfa-option-content p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Security Stats */
+.security-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #E3E3E3;
+}
+
+.security-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #F8F9FA;
+  border-radius: 8px;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.stat-value {
+  color: #1A1A1A;
+  font-weight: 500;
+}
+
+/* Device Management */
+.device-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.device-list {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.device-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border: 1px solid #E3E3E3;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+}
+
+.device-card.current-device {
+  border-color: #0078D4;
+  background-color: rgba(0, 120, 212, 0.02);
+}
+
+.device-info {
+  flex: 1;
+}
+
+.device-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.device-icon {
+  font-size: 2rem;
+}
+
+.device-details {
+  flex: 1;
+}
+
+.device-name {
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.current-badge {
+  background-color: #0078D4;
+  color: #FFFFFF;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.trusted-badge {
+  background-color: #28A745;
+  color: #FFFFFF;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.device-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.device-timestamps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.timestamp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.timestamp-label {
+  color: #666;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.timestamp-value {
+  color: #1A1A1A;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Security Notice */
+.security-notice {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: #FFF3CD;
+  border: 1px solid #F7A800;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.notice-icon {
+  font-size: 1.5rem;
+  color: #F7A800;
+}
+
+.notice-content h4 {
+  margin: 0 0 0.75rem 0;
+  color: #856404;
+}
+
+.notice-content ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #856404;
+}
+
+.notice-content li {
+  margin-bottom: 0.25rem;
+}
+
+/* Device Statistics */
+.device-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: #F8F9FA;
+  border-radius: 12px;
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1A1A1A;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .profile-title {
+    font-size: 2rem;
+  }
+
+  .profile-tabs {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1rem;
+  }
+
+  .profile-content {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .device-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .device-actions {
+    align-self: stretch;
+  }
+
+  .device-actions .btn {
+    flex: 1;
+  }
+
+  .device-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .security-stats {
+    grid-template-columns: 1fr;
+  }
+}

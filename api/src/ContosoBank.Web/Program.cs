@@ -91,7 +91,9 @@ app.UseHttpsRedirection();
 // Enable CORS
 app.UseCors("AllowReactApp");
 
-app.UseAuthorization();
+// Note: Using custom session-based authentication instead of built-in Authorization middleware
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 

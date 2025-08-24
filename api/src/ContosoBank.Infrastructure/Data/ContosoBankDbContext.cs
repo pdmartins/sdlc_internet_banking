@@ -32,7 +32,7 @@ public class ContosoBankDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Phone).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Phone).IsRequired().HasMaxLength(100); // Increased to accommodate encrypted data
             entity.Property(e => e.CPF).IsRequired().HasMaxLength(14);
             entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
             entity.Property(e => e.SecurityQuestion).IsRequired().HasMaxLength(255);
@@ -338,7 +338,7 @@ public class ContosoBankDbContext : DbContext
             entity.HasOne(e => e.User)
                   .WithMany()
                   .HasForeignKey(e => e.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.LoginAttempt)
                   .WithMany()
@@ -392,7 +392,7 @@ public class ContosoBankDbContext : DbContext
             entity.HasOne(e => e.LoginAttempt)
                   .WithMany()
                   .HasForeignKey(e => e.LoginAttemptId)
-                  .OnDelete(DeleteBehavior.SetNull);
+                  .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.AnomalyDetection)
                   .WithMany()
