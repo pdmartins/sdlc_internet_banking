@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Welcome from './components/Welcome';
 import PersonalInfoForm from './components/PersonalInfoForm';
@@ -16,18 +16,31 @@ import ProfilePage from './pages/ProfilePage';
 import InactivityWarning from './components/InactivityWarning';
 import { RegistrationProvider } from './contexts/RegistrationContext';
 import { AuthProvider } from './contexts/AuthContext';
+import story511, { initializeAccessibilityAndPerformance } from './utils/story5-1-1';
 import './styles/global.css';
 
 const App: React.FC = () => {
+  // Initialize accessibility and performance features - User Story 5.1.1
+  useEffect(() => {
+    initializeAccessibilityAndPerformance();
+  }, []);
+
   return (
     <AuthProvider>
       <RegistrationProvider>
         <Router>
-          <div className="App">
+          <div className="App" id="app-root">
+            {/* Skip link for accessibility */}
+            <a href="#main-content" className="skip-link sr-only-focusable">
+              Pular para o conteúdo principal
+            </a>
+            
             {/* Inactivity Warning - Feature 2.3.1 */}
             <InactivityWarning />
-            <Routes>
-              {/* Default route redirects to welcome */}
+            
+            <main id="main-content" role="main">
+              <Routes>
+                {/* Default route redirects to welcome */}
               <Route path="/" element={<Navigate to="/welcome" replace />} />
               {/* Welcome screen - User Story 1.1.1 */}
               <Route path="/welcome" element={<Welcome />} />
@@ -52,6 +65,7 @@ const App: React.FC = () => {
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/welcome" replace />} />
             </Routes>
+            </main>
           </div>
         </Router>
       </RegistrationProvider>
