@@ -46,6 +46,32 @@ export interface ApiError {
   errors?: { [key: string]: string[] };
 }
 
+export interface TransactionHistoryResponse {
+  transactions: TransactionResponse[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+
+export interface TransactionHistoryFilters {
+  page?: number;
+  pageSize?: number;
+  startDate?: string;
+  endDate?: string;
+  transactionType?: 'CREDIT' | 'DEBIT';
+  minAmount?: number;
+  maxAmount?: number;
+  status?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: string[];
+}
+
 class TransactionApiService {
   private async getAuthHeaders(): Promise<HeadersInit> {
     // Get the token from the user session stored by AuthContext
@@ -133,6 +159,46 @@ class TransactionApiService {
     } catch (error) {
       console.error('Transaction history API error:', error);
       throw error;
+    }
+  }
+
+  async getTransactionHistoryWithFilters(filters: TransactionHistoryFilters): Promise<ApiResponse<TransactionHistoryResponse>> {
+    try {
+      const params = new URLSearchParams();
+      
+      if (filters.page) params.append('pageNumber', filters.page.toString());
+      if (filters.pageSize) params.append('pageSize', filters.pageSize.toString());
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.transactionType) params.append('type', filters.transactionType);
+      if (filters.minAmount !== undefined) params.append('minAmount', filters.minAmount.toString());
+      if (filters.maxAmount !== undefined) params.append('maxAmount', filters.maxAmount.toString());
+      if (filters.status) params.append('status', filters.status);
+
+      const response = await fetch(`${API_BASE_URL}/api/transactions/history/filtered?${params}`, {
+        method: 'GET',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData: ApiError = await response.json();
+        return {
+          success: false,
+          message: errorData.message || 'Failed to fetch transaction history'
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Transaction history API error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
     }
   }
 

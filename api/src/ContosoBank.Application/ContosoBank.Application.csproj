@@ -11,6 +11,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.4.22" />
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
   </ItemGroup>
 
   <ItemGroup>

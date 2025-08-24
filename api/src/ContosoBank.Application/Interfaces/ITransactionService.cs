@@ -50,6 +50,30 @@ public interface ITransactionService
     Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryByTypeAsync(Guid userId, string type);
 
     /// <summary>
+    /// Gets transaction history with comprehensive filtering support
+    /// </summary>
+    /// <param name="userId">User identifier</param>
+    /// <param name="pageSize">Number of transactions per page</param>
+    /// <param name="pageNumber">Page number (1-based)</param>
+    /// <param name="startDate">Start date for filtering (optional)</param>
+    /// <param name="endDate">End date for filtering (optional)</param>
+    /// <param name="type">Transaction type filter (optional)</param>
+    /// <param name="minAmount">Minimum amount filter (optional)</param>
+    /// <param name="maxAmount">Maximum amount filter (optional)</param>
+    /// <param name="status">Status filter (optional)</param>
+    /// <returns>List of filtered transactions</returns>
+    Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryWithFiltersAsync(
+        Guid userId, 
+        int pageSize = 20, 
+        int pageNumber = 1,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        string? type = null,
+        decimal? minAmount = null,
+        decimal? maxAmount = null,
+        string? status = null);
+
+    /// <summary>
     /// Gets a specific transaction by ID
     /// </summary>
     /// <param name="userId">User identifier</param>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Transaction History Fix</title>
+</head>
+<body>
+    <h1>Transaction History Test</h1>
+    <p>Testing the fix for the transaction history component error.</p>
+    
+    <script>
+        // Simulate the original problematic code
+        console.log("Testing original problematic code:");
+        try {
+            const mockResponse = {
+                success: true,
+                data: [
+                    {
+                        transactionId: "123",
+                        amount: 100,
+                        type: "Credit",
+                        description: "Test",
+                        createdAt: "2025-08-23T10:00:00Z",
+                        status: "Completed"
+                    }
+                ]
+            };
+            
+            // This would cause the error: Cannot read properties of undefined (reading 'map')
+            // const result = mockResponse.data.transactions.map(...);
+            
+            // Fixed version:
+            const transactionArray = Array.isArray(mockResponse.data) ? mockResponse.data : [];
+            const result = transactionArray.map(tr => ({
+                id: tr.transactionId,
+                amount: tr.amount,
+                type: tr.type,
+                description: tr.description,
+                timestamp: tr.createdAt,
+                status: tr.status
+            }));
+            
+            console.log("✅ Fixed version works:", result);
+        } catch (error) {
+            console.error("❌ Error:", error.message);
+        }
+    </script>
+</body>
+</html>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { transactionApi, TransactionResponse } from '../services/transactionApi';
 
 const Dashboard: React.FC = () => {
   const { session, isLoading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [balance, setBalance] = useState<number>(0);
   const [recentTransactions, setRecentTransactions] = useState<TransactionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -250,17 +251,17 @@ const Dashboard: React.FC = () => {
         <div className="quick-actions">
           <h3 className="section-title">Ações Rápidas</h3>
           <div className="action-cards">
-            <div className="action-card" onClick={() => window.location.href = '/transaction'}>
+            <div className="action-card" onClick={() => navigate('/transaction')}>
               <div className="action-icon">💸</div>
               <h4>Nova Transação</h4>
               <p>Transferir ou depositar dinheiro</p>
             </div>
-            <div className="action-card" onClick={() => window.location.href = '/transaction/history'}>
+            <div className="action-card" onClick={() => navigate('/transaction/history')}>
               <div className="action-icon">📊</div>
               <h4>Histórico</h4>
               <p>Ver todas as transações</p>
             </div>
-            <div className="action-card" onClick={() => window.location.href = '/profile'}>
+            <div className="action-card" onClick={() => navigate('/profile')}>
               <div className="action-icon">⚙️</div>
               <h4>Configurações</h4>
               <p>Gerenciar sua conta</p>
@@ -273,7 +274,7 @@ const Dashboard: React.FC = () => {
           <div className="section-header">
             <h3 className="section-title">Transações Recentes</h3>
             <button 
-              onClick={() => window.location.href = '/transaction/history'}
+              onClick={() => navigate('/transaction/history')}
               className="btn btn-secondary btn-small"
             >
               Ver Todas

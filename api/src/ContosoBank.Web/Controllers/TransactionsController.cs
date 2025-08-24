@@ -16,15 +16,25 @@ namespace ContosoBank.Web.Controllers;
 public class TransactionsController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly ITransactionExportService _transactionExportService;
     private readonly ISessionService _sessionService;
     private readonly ILogger<TransactionsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the TransactionsController
+    /// </summary>
+    /// <param name="transactionService">Service for managing transactions</param>
+    /// <param name="transactionExportService">Service for exporting transaction data</param>
+    /// <param name="sessionService">Service for managing user sessions</param>
+    /// <param name="logger">Logger instance</param>
     public TransactionsController(
         ITransactionService transactionService,
+        ITransactionExportService transactionExportService,
         ISessionService sessionService,
         ILogger<TransactionsController> logger)
     {
         _transactionService = transactionService;
+        _transactionExportService = transactionExportService;
         _sessionService = sessionService;
         _logger = logger;
     }
@@ -208,6 +218,66 @@ public class TransactionsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets transaction history with comprehensive filtering support
+    /// </summary>
+    /// <param name="pageSize">Number of transactions per page (default: 20)</param>
+    /// <param name="pageNumber">Page number (default: 1)</param>
+    /// <param name="startDate">Start date filter (YYYY-MM-DD) (optional)</param>
+    /// <param name="endDate">End date filter (YYYY-MM-DD) (optional)</param>
+    /// <param name="type">Transaction type filter (CREDIT or DEBIT) (optional)</param>
+    /// <param name="minAmount">Minimum amount filter (optional)</param>
+    /// <param name="maxAmount">Maximum amount filter (optional)</param>
+    /// <param name="status">Status filter (COMPLETED, PENDING, FAILED, CANCELLED) (optional)</param>
+    /// <returns>List of filtered transactions</returns>
+    [HttpGet("history/filtered")]
+    public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetTransactionHistoryWithFilters(
+        [FromQuery] int pageSize = 20,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? type = null,
+        [FromQuery] decimal? minAmount = null,
+        [FromQuery] decimal? maxAmount = null,
+        [FromQuery] string? status = null)
+    {
+        try
+        {
+            var userId = await GetCurrentUserIdAsync();
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("Invalid user session");
+            }
+
+            // Validate pagination parameters
+            if (pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest("Page size must be between 1 and 100");
+            }
+            
+            if (pageNumber < 1)
+            {
+                return BadRequest("Page number must be greater than 0");
+            }
+
+            // Validate date range if provided
+            if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+            {
+                return BadRequest("Start date cannot be greater than end date");
+            }
+
+            var transactions = await _transactionService.GetTransactionHistoryWithFiltersAsync(
+                userId, pageSize, pageNumber, startDate, endDate, type, minAmount, maxAmount, status);
+                
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting filtered transaction history");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
     /// Gets a specific transaction by ID
     /// </summary>
     /// <param name="transactionId">Transaction identifier</param>
@@ -362,6 +432,116 @@ public class TransactionsController : ControllerBase
     {
         var validTypes = new[] { "CREDIT", "DEBIT" };
         return validTypes.Contains(type.ToUpper());
+    }
+
+    /// <summary>
+    /// Exports transaction history to CSV format
+    /// </summary>
+    /// <param name="startDate">Start date for transaction history (optional)</param>
+    /// <param name="endDate">End date for transaction history (optional)</param>
+    /// <param name="type">Transaction type filter (optional)</param>
+    /// <returns>CSV file with transaction history</returns>
+    [HttpGet("export/csv")]
+    public async Task<IActionResult> ExportTransactionsCsv(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? type = null)
+    {
+        try
+        {
+            _logger.LogInformation("CSV export requested: startDate={StartDate}, endDate={EndDate}, type={Type}", startDate, endDate, type);
+            
+            var userId = await GetCurrentUserIdAsync();
+            if (userId == Guid.Empty)
+            {
+                _logger.LogWarning("CSV export failed: Invalid user session");
+                return Unauthorized("Invalid user session");
+            }
+
+            _logger.LogInformation("CSV export for user {UserId}", userId);
+
+            var request = new TransactionExportRequestDto
+            {
+                StartDate = startDate,
+                EndDate = endDate,
+                TransactionType = type,
+                Format = "CSV"
+            };
+
+            _logger.LogInformation("Export request created: {@Request}", request);
+
+            var result = await _transactionExportService.ExportToCsvAsync(userId, request);
+            
+            if (!result.IsSuccessful)
+            {
+                _logger.LogWarning("CSV export failed for user {UserId}: {ErrorMessage}", userId, result.ErrorMessage);
+                return BadRequest(result.ErrorMessage);
+            }
+
+            var fileBytes = Convert.FromBase64String(result.FileContent ?? "");
+            var fileName = result.FileName ?? $"transactions_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            return File(fileBytes, result.ContentType ?? "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting transactions to CSV for user {UserId}", await GetCurrentUserIdAsync());
+            return StatusCode(500, "An error occurred while exporting transactions");
+        }
+    }
+
+    /// <summary>
+    /// Exports transaction history to PDF format
+    /// </summary>
+    /// <param name="startDate">Start date for transaction history (optional)</param>
+    /// <param name="endDate">End date for transaction history (optional)</param>
+    /// <param name="type">Transaction type filter (optional)</param>
+    /// <returns>PDF file with transaction history</returns>
+    [HttpGet("export/pdf")]
+    public async Task<IActionResult> ExportTransactionsPdf(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] string? type = null)
+    {
+        try
+        {
+            _logger.LogInformation("PDF export requested: startDate={StartDate}, endDate={EndDate}, type={Type}", startDate, endDate, type);
+            
+            var userId = await GetCurrentUserIdAsync();
+            if (userId == Guid.Empty)
+            {
+                _logger.LogWarning("PDF export failed: Invalid user session");
+                return Unauthorized("Invalid user session");
+            }
+
+            _logger.LogInformation("PDF export for user {UserId}", userId);
+
+            var request = new TransactionExportRequestDto
+            {
+                StartDate = startDate,
+                EndDate = endDate,
+                TransactionType = type,
+                Format = "PDF"
+            };
+
+            _logger.LogInformation("Export request created: {@Request}", request);
+
+            var result = await _transactionExportService.ExportToPdfAsync(userId, request);
+            
+            if (!result.IsSuccessful)
+            {
+                _logger.LogWarning("PDF export failed for user {UserId}: {ErrorMessage}", userId, result.ErrorMessage);
+                return BadRequest(result.ErrorMessage);
+            }
+
+            var fileBytes = Convert.FromBase64String(result.FileContent ?? "");
+            var fileName = result.FileName ?? $"transactions_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            return File(fileBytes, result.ContentType ?? "application/pdf", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting transactions to PDF for user {UserId}", await GetCurrentUserIdAsync());
+            return StatusCode(500, "An error occurred while exporting transactions");
+        }
     }
 
     #endregion

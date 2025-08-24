@@ -234,6 +234,69 @@ public class TransactionService : ITransactionService
         return transactions.OrderByDescending(t => t.CreatedAt).Select(MapToTransactionResponseDto);
     }
 
+    public async Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryWithFiltersAsync(
+        Guid userId, 
+        int pageSize = 20, 
+        int pageNumber = 1,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        string? type = null,
+        decimal? minAmount = null,
+        decimal? maxAmount = null,
+        string? status = null)
+    {
+        var account = await GetUserAccountAsync(userId);
+        if (account == null)
+        {
+            return Enumerable.Empty<TransactionResponseDto>();
+        }
+
+        // Get all transactions for the account (this could be optimized with a new repository method)
+        var allTransactions = await _unitOfWork.Transactions.GetByAccountIdAsync(account.Id);
+
+        // Apply filters in memory
+        var filteredTransactions = allTransactions.AsEnumerable();
+
+        if (startDate.HasValue)
+        {
+            filteredTransactions = filteredTransactions.Where(t => t.CreatedAt >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            filteredTransactions = filteredTransactions.Where(t => t.CreatedAt <= endDate.Value.AddDays(1).AddTicks(-1));
+        }
+
+        if (!string.IsNullOrEmpty(type))
+        {
+            filteredTransactions = filteredTransactions.Where(t => t.Type.Equals(type, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (minAmount.HasValue)
+        {
+            filteredTransactions = filteredTransactions.Where(t => Math.Abs(t.Amount) >= minAmount.Value);
+        }
+
+        if (maxAmount.HasValue)
+        {
+            filteredTransactions = filteredTransactions.Where(t => Math.Abs(t.Amount) <= maxAmount.Value);
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            filteredTransactions = filteredTransactions.Where(t => t.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply ordering and pagination
+        var pagedTransactions = filteredTransactions
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return pagedTransactions.Select(MapToTransactionResponseDto);
+    }
+
     public async Task<TransactionResponseDto?> GetTransactionByIdAsync(Guid userId, Guid transactionId)
     {
         var account = await GetUserAccountAsync(userId);

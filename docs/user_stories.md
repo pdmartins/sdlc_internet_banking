@@ -45,7 +45,23 @@
 
 ### Feature 3.2: Transaction History & Export
 - **User Story 3.2.1:**  *As a user, I want to view, filter, and export my transaction history, so I can analyze and share my financial data.*
-  - **Acceptance Criteria:** Paginated/filterable table; export (PDF/CSV); detailed transaction view; audit trail.
+  - **Acceptance Criteria:** 
+    - **Transaction History Display**: Paginated table showing transaction date, type (Credit/Debit), description, recipient, amount, and status
+    - **Advanced Filtering**: Filter by date range, transaction type, amount range, and status with real-time application
+    - **Export Functionality**: Export filtered transactions to CSV or PDF formats with proper formatting
+    - **Responsive Design**: Table adapts to mobile devices with horizontal scrolling and condensed view
+    - **Performance**: Pagination handles large datasets efficiently with server-side filtering
+    - **Security**: All transaction data access is authenticated and authorized per user
+    - **User Experience**: Clear visual indicators for transaction types, loading states, and error handling
+  - **Technical Implementation:**
+    - **Backend**: `TransactionExportService` with CSV and PDF generation using CsvHelper and iTextSharp
+    - **API Endpoints**: 
+      - `GET /api/transactions/history` - Paginated transaction history with filtering
+      - `GET /api/transactions/export/csv` - CSV export with query parameters
+      - `GET /api/transactions/export/pdf` - PDF export with formatted layout
+    - **Frontend**: `TransactionHistory` component with advanced filtering UI and export functionality
+    - **Data Transfer**: Proper DTOs for transaction export requests and responses
+    - **File Handling**: Secure download mechanism with proper Content-Type headers
 
 ### Feature 3.3: Security & Compliance
 - **User Story 3.3.1:**  *As the system, I want to monitor all transactions for fraud and enforce limits/fees, so the bank remains compliant and secure.*
