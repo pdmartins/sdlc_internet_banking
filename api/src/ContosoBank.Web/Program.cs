@@ -1,11 +1,64 @@
 using ContosoBank.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Azure Key Vault (if in production)
+if (!builder.Environment.IsDevelopment())
+{
+    var keyVaultEndpoint = builder.Configuration["AzureKeyVault:VaultUri"];
+    if (!string.IsNullOrEmpty(keyVaultEndpoint))
+    {
+        var secretClient = new SecretClient(new Uri(keyVaultEndpoint), new DefaultAzureCredential());
+        builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+    }
+}
+
 // Add services to the container
 builder.Services.AddControllers();
+
+// Configure Data Protection for CSRF tokens
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("./keys"))
+    .SetApplicationName("ContosoBank");
+
+// Add Antiforgery services for CSRF protection
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.SuppressXFrameOptionsHeader = false;
+});
+
+// Configure Azure AD Authentication
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+}
+
+// Add Authorization
+builder.Services.AddAuthorization();
+
+// Configure HTTPS Redirection
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+    options.HttpsPort = 443;
+});
+
+// Configure Forward Headers for proper HTTPS detection
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -59,6 +112,9 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Configure Forward Headers (must be early in pipeline)
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -73,27 +129,48 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/error");
+    // HSTS (HTTP Strict Transport Security)
     app.UseHsts();
 }
 
-// Security headers
+// Enhanced Security Headers
 app.Use(async (context, next) =>
 {
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    // Prevent clickjacking
     context.Response.Headers["X-Frame-Options"] = "DENY";
+    
+    // Prevent MIME type sniffing
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    
+    // XSS Protection (for older browsers)
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    
+    // Referrer Policy
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    
+    // Content Security Policy
+    context.Response.Headers["Content-Security-Policy"] = 
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'";
+    
+    // Permissions Policy (formerly Feature Policy)
+    context.Response.Headers["Permissions-Policy"] = 
+        "geolocation=(), microphone=(), camera=()";
+    
     await next();
 });
 
+// HTTPS Redirection (enforces HTTPS)
 app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors("AllowReactApp");
 
-// Note: Using custom session-based authentication instead of built-in Authorization middleware
-// app.UseAuthentication();
-// app.UseAuthorization();
+// Authentication and Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Add Antiforgery middleware
+app.UseAntiforgery();
 
 app.MapControllers();
 

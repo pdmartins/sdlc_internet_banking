@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<ITransactionExportService, TransactionExportService>();
+        services.AddScoped<ISecurityService, SecurityService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
 
         return services;

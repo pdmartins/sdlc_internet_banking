@@ -16,7 +16,7 @@ import ProfilePage from './pages/ProfilePage';
 import InactivityWarning from './components/InactivityWarning';
 import { RegistrationProvider } from './contexts/RegistrationContext';
 import { AuthProvider } from './contexts/AuthContext';
-import story511, { initializeAccessibilityAndPerformance } from './utils/story5-1-1';
+import { initializeAccessibilityAndPerformance } from './utils/story5-1-1';
 import './styles/global.css';
 
 const App: React.FC = () => {
